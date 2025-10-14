@@ -15,6 +15,7 @@ type Monster = {
   traits: MonsterTraits
   current_state: string
   created_at: string
+  last_state_change?: string
 }
 
 type MonsterListProps = {
@@ -87,6 +88,32 @@ const monsterNames = [
   "Lily",
 ]
 
+function calculateDisplayState(lastStateChange: string | undefined, currentState: string): string {
+  if (!lastStateChange) return currentState
+
+  const now = new Date()
+  const lastChange = new Date(lastStateChange)
+  const minutesElapsed = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60))
+
+  // If the monster is already in a need state, keep it
+  if (currentState !== "happy" && currentState !== "excited") {
+    return currentState
+  }
+
+  // Every 5 minutes, there's a chance the monster needs something
+  const stateChanges = Math.floor(minutesElapsed / 5)
+
+  if (stateChanges === 0) {
+    return currentState
+  }
+
+  // Determine new state based on time elapsed
+  const needStates = ["sad", "hungry", "sleepy", "sick", "dirty", "bored"]
+  const stateIndex = stateChanges % needStates.length
+
+  return needStates[stateIndex]
+}
+
 export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const router = useRouter()
@@ -154,46 +181,46 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {monsters.map((monster) => (
-            <Link key={monster.id} href={`/monster/${monster.id}`}>
-              <Card className="p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 border-border bg-card/95 backdrop-blur-sm">
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-2xl p-4 border-2 border-border">
-                    <div className="w-48 h-48 mx-auto">
-                      <PixelMonster
-                        state={monster.current_state as any}
-                        actionAnimation={null}
-                        traits={monster.traits}
-                      />
+          {monsters.map((monster) => {
+            const displayState = calculateDisplayState(monster.last_state_change, monster.current_state)
+
+            return (
+              <Link key={monster.id} href={`/monster/${monster.id}`}>
+                <Card className="p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 border-border bg-card/95 backdrop-blur-sm">
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-2xl p-4 border-2 border-border">
+                      <div className="w-48 h-48 mx-auto">
+                        <PixelMonster state={displayState as any} actionAnimation={null} traits={monster.traits} />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        État :{" "}
+                        {displayState === "happy"
+                          ? "Heureux"
+                          : displayState === "sad"
+                            ? "Triste"
+                            : displayState === "hungry"
+                              ? "Affamé"
+                              : displayState === "sleepy"
+                                ? "Endormi"
+                                : displayState === "sick"
+                                  ? "Malade"
+                                  : displayState === "dirty"
+                                    ? "Sale"
+                                    : displayState === "bored"
+                                      ? "Ennuyé"
+                                      : displayState === "excited"
+                                        ? "Excité"
+                                        : displayState}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      État :{" "}
-                      {monster.current_state === "happy"
-                        ? "Heureux"
-                        : monster.current_state === "sad"
-                          ? "Triste"
-                          : monster.current_state === "hungry"
-                            ? "Affamé"
-                            : monster.current_state === "sleepy"
-                              ? "Endormi"
-                              : monster.current_state === "sick"
-                                ? "Malade"
-                                : monster.current_state === "dirty"
-                                  ? "Sale"
-                                  : monster.current_state === "bored"
-                                    ? "Ennuyé"
-                                    : monster.current_state === "excited"
-                                      ? "Excité"
-                                      : monster.current_state}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>
