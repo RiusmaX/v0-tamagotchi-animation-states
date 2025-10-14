@@ -125,14 +125,12 @@
   }
 }
 
-/* Enhanced pixel art styling with smooth animations */
 .pixel-art {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
 
-/* Added floating animation for cute effect */
 @keyframes float {
   0%,
   100% {
@@ -147,7 +145,6 @@
   animation: float 3s ease-in-out infinite;
 }
 
-/* Added sparkle effect for magical feel */
 @keyframes sparkle {
   0%,
   100% {
@@ -164,7 +161,6 @@
   animation: sparkle 2s ease-in-out infinite;
 }
 
-/* Added coin float animation for earning coins */
 @keyframes coin-float {
   0% {
     opacity: 0;

@@ -19,6 +19,9 @@ type Monster = {
   current_state: string
   created_at: string
   last_state_change?: string
+  equipped_hat?: string
+  equipped_glasses?: string
+  equipped_shoes?: string
 }
 
 type MonsterListProps = {
@@ -295,7 +298,16 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
                       className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500`}
                     >
                       <div className="w-48 h-48 mx-auto">
-                        <PixelMonster state={displayState as any} actionAnimation={null} traits={monster.traits} />
+                        <PixelMonster
+                          state={displayState as any}
+                          actionAnimation={null}
+                          traits={monster.traits}
+                          accessories={{
+                            hat: monster.equipped_hat,
+                            glasses: monster.equipped_glasses,
+                            shoes: monster.equipped_shoes,
+                          }}
+                        />
                       </div>
                     </div>
                     <div className="text-center space-y-2">
