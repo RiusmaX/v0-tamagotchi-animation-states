@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
 
-type MonsterState = "happy" | "sad" | "hungry" | "sleepy" | "sick" | "dirty" | "bored" | "excited"
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
 
 type Monster = {
@@ -22,34 +22,8 @@ type Monster = {
   last_state_change?: string
 }
 
-function calculateStateFromTime(lastStateChange: string, currentState: MonsterState): MonsterState {
-  const now = new Date()
-  const lastChange = new Date(lastStateChange)
-  const minutesElapsed = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60))
-
-  // If the monster is already in a need state, keep it
-  if (currentState !== "happy" && currentState !== "excited") {
-    return currentState
-  }
-
-  // Average of 2 minutes for state changes
-  const stateChanges = Math.floor(minutesElapsed / 2)
-
-  if (stateChanges === 0) {
-    return currentState
-  }
-
-  // Determine new state based on time elapsed
-  const needStates: MonsterState[] = ["sad", "hungry", "sleepy", "sick", "dirty", "bored"]
-  const stateIndex = stateChanges % needStates.length
-
-  return needStates[stateIndex]
-}
-
 export function MonsterInteraction({ monster }: { monster: Monster }) {
-  const initialState = monster.last_state_change
-    ? calculateStateFromTime(monster.last_state_change, monster.current_state as MonsterState)
-    : (monster.current_state as MonsterState)
+  const initialState = calculateMonsterState(monster.last_state_change, monster.current_state as MonsterState)
 
   const [state, setState] = useState<MonsterState>(initialState)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -71,17 +45,13 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
       }
     }
 
-    // Only save if state is different from initial
-    if (state !== monster.current_state) {
-      saveState()
-    }
-  }, [state, monster.id, monster.current_state, supabase])
+    // Always save state changes to keep database in sync
+    saveState()
+  }, [state, monster.id, supabase])
 
   useEffect(() => {
-    const getRandomInterval = () => Math.floor(Math.random() * 120000) + 60000
-
     const scheduleNextStateChange = () => {
-      const interval = getRandomInterval()
+      const interval = getRandomStateChangeInterval()
 
       const timeout = setTimeout(() => {
         if (state === "happy" && !isAnimating) {

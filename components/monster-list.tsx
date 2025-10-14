@@ -2,12 +2,14 @@
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Plus, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
+import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
 
 type Monster = {
   id: string
@@ -88,36 +90,124 @@ const monsterNames = [
   "Lily",
 ]
 
-function calculateDisplayState(lastStateChange: string | undefined, currentState: string): string {
-  if (!lastStateChange) return currentState
-
-  const now = new Date()
-  const lastChange = new Date(lastStateChange)
-  const minutesElapsed = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60))
-
-  // If the monster is already in a need state, keep it
-  if (currentState !== "happy" && currentState !== "excited") {
-    return currentState
-  }
-
-  // Every 5 minutes, there's a chance the monster needs something
-  const stateChanges = Math.floor(minutesElapsed / 5)
-
-  if (stateChanges === 0) {
-    return currentState
-  }
-
-  // Determine new state based on time elapsed
-  const needStates = ["sad", "hungry", "sleepy", "sick", "dirty", "bored"]
-  const stateIndex = stateChanges % needStates.length
-
-  return needStates[stateIndex]
+const stateColors = {
+  happy: {
+    bg: "bg-green-100 dark:bg-green-900/30",
+    border: "border-green-400",
+    text: "text-green-700 dark:text-green-300",
+    label: "Heureux 😊",
+  },
+  sad: {
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+    border: "border-blue-400",
+    text: "text-blue-700 dark:text-blue-300",
+    label: "Triste 😢",
+  },
+  hungry: {
+    bg: "bg-orange-100 dark:bg-orange-900/30",
+    border: "border-orange-400",
+    text: "text-orange-700 dark:text-orange-300",
+    label: "Affamé 🍎",
+  },
+  sleepy: {
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    border: "border-purple-400",
+    text: "text-purple-700 dark:text-purple-300",
+    label: "Endormi 😴",
+  },
+  sick: {
+    bg: "bg-red-100 dark:bg-red-900/30",
+    border: "border-red-400",
+    text: "text-red-700 dark:text-red-300",
+    label: "Malade 🤒",
+  },
+  dirty: {
+    bg: "bg-amber-100 dark:bg-amber-900/30",
+    border: "border-amber-400",
+    text: "text-amber-700 dark:text-amber-300",
+    label: "Sale 💩",
+  },
+  bored: {
+    bg: "bg-gray-100 dark:bg-gray-900/30",
+    border: "border-gray-400",
+    text: "text-gray-700 dark:text-gray-300",
+    label: "Ennuyé 😐",
+  },
+  excited: {
+    bg: "bg-pink-100 dark:bg-pink-900/30",
+    border: "border-pink-400",
+    text: "text-pink-700 dark:text-pink-300",
+    label: "Excité 🎉",
+  },
 }
 
 export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
+  const [displayStates, setDisplayStates] = useState<Record<string, string>>({})
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    // Refresh on mount to get latest data from database
+    router.refresh()
+
+    // Refresh when page becomes visible again (user returns from detail page)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [router])
+
+  useEffect(() => {
+    const initialStates: Record<string, string> = {}
+    monsters.forEach((monster) => {
+      initialStates[monster.id] = calculateMonsterState(
+        monster.last_state_change,
+        monster.current_state as MonsterState,
+      )
+    })
+    setDisplayStates(initialStates)
+  }, [monsters])
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newStates: Record<string, string> = {}
+      const updates: Array<{ id: string; state: string }> = []
+
+      monsters.forEach((monster) => {
+        const newState = calculateMonsterState(monster.last_state_change, monster.current_state as MonsterState)
+        newStates[monster.id] = newState
+
+        // If state changed, prepare update
+        if (newState !== monster.current_state) {
+          updates.push({ id: monster.id, state: newState })
+        }
+      })
+
+      setDisplayStates(newStates)
+
+      // Save state changes to database
+      if (updates.length > 0) {
+        for (const update of updates) {
+          await supabase
+            .from("monsters")
+            .update({
+              current_state: update.state,
+              last_state_change: new Date().toISOString(),
+            })
+            .eq("id", update.id)
+        }
+        // Refresh to get updated data
+        router.refresh()
+      }
+    }, 10000) // Update every 10 seconds
+
+    return () => clearInterval(interval)
+  }, [monsters, supabase, router])
 
   const handleCreateMonster = async () => {
     setIsCreating(true)
@@ -182,39 +272,29 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {monsters.map((monster) => {
-            const displayState = calculateDisplayState(monster.last_state_change, monster.current_state)
+            const displayState = displayStates[monster.id] || monster.current_state
+            const stateStyle = stateColors[displayState as keyof typeof stateColors] || stateColors.happy
 
             return (
               <Link key={monster.id} href={`/monster/${monster.id}`}>
-                <Card className="p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 border-border bg-card/95 backdrop-blur-sm">
+                <Card
+                  className={`p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 ${stateStyle.border} bg-card/95 backdrop-blur-sm`}
+                >
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-2xl p-4 border-2 border-border">
+                    <div
+                      className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500`}
+                    >
                       <div className="w-48 h-48 mx-auto">
                         <PixelMonster state={displayState as any} actionAnimation={null} traits={monster.traits} />
                       </div>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center space-y-2">
                       <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        État :{" "}
-                        {displayState === "happy"
-                          ? "Heureux"
-                          : displayState === "sad"
-                            ? "Triste"
-                            : displayState === "hungry"
-                              ? "Affamé"
-                              : displayState === "sleepy"
-                                ? "Endormi"
-                                : displayState === "sick"
-                                  ? "Malade"
-                                  : displayState === "dirty"
-                                    ? "Sale"
-                                    : displayState === "bored"
-                                      ? "Ennuyé"
-                                      : displayState === "excited"
-                                        ? "Excité"
-                                        : displayState}
-                      </p>
+                      <Badge
+                        className={`${stateStyle.bg} ${stateStyle.text} ${stateStyle.border} border-2 text-sm font-semibold px-3 py-1`}
+                      >
+                        {stateStyle.label}
+                      </Badge>
                     </div>
                   </div>
                 </Card>
