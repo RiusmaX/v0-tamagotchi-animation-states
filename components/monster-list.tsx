@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Sparkles, Settings } from "lucide-react"
+import { Plus, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -241,12 +241,6 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
     }
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-    router.refresh()
-  }
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -260,18 +254,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
           {isCreating ? "Création..." : "Créer un nouveau monstre"}
         </Button>
 
-        <div className="flex items-center gap-3">
-          <WalletDisplay />
-          <Link href="/settings">
-            <Button variant="outline" size="lg" className="gap-2 bg-transparent">
-              <Settings className="h-5 w-5" />
-              Paramètres
-            </Button>
-          </Link>
-          <Button onClick={handleLogout} variant="outline" size="lg">
-            Se déconnecter
-          </Button>
-        </div>
+        <WalletDisplay />
       </div>
 
       {monsters.length === 0 ? (
