@@ -6,10 +6,14 @@ import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
+import { addCoins } from "@/lib/currency"
+import { WalletDisplay } from "@/components/wallet-display"
+import { ShopModal } from "@/components/shop-modal"
+import { CoinAnimation } from "@/components/coin-animation"
 
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
 
@@ -20,14 +24,23 @@ type Monster = {
   current_state: string
   user_id: string
   last_state_change?: string
+  equipped_hat?: string | null
+  equipped_glasses?: string | null
+  equipped_shoes?: string | null
 }
 
-export function MonsterInteraction({ monster }: { monster: Monster }) {
-  const initialState = calculateMonsterState(monster.last_state_change, monster.current_state as MonsterState)
+export function MonsterInteraction({ monster: initialMonster }: { monster: Monster }) {
+  const initialState = calculateMonsterState(
+    initialMonster.last_state_change,
+    initialMonster.current_state as MonsterState,
+  )
 
   const [state, setState] = useState<MonsterState>(initialState)
   const [isAnimating, setIsAnimating] = useState(false)
   const [currentAction, setCurrentAction] = useState<ActionAnimation>(null)
+  const [shopOpen, setShopOpen] = useState(false)
+  const [monster, setMonster] = useState(initialMonster)
+  const [coinTrigger, setCoinTrigger] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -45,7 +58,6 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
       }
     }
 
-    // Always save state changes to keep database in sync
     saveState()
   }, [state, monster.id, supabase])
 
@@ -69,9 +81,12 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
     return () => clearTimeout(timeout)
   }, [state, isAnimating])
 
-  const handleAction = (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
+  const handleAction = async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
     setIsAnimating(true)
     setCurrentAction(action)
+
+    await addCoins(1)
+    setCoinTrigger((prev) => prev + 1)
 
     const actionStateMap = {
       play: "bored",
@@ -107,6 +122,14 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
     }
   }
 
+  const handleAccessoryEquipped = async () => {
+    const { data, error } = await supabase.from("monsters").select("*").eq("id", monster.id).single()
+
+    if (!error && data) {
+      setMonster(data)
+    }
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -126,6 +149,7 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
       </div>
 
       <Card className="w-full max-w-2xl p-8 shadow-2xl border-4 border-border bg-card/95 backdrop-blur-sm relative z-10">
+        <CoinAnimation trigger={coinTrigger} />
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
             <Button variant="outline" size="lg">
@@ -133,6 +157,13 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
               Retour
             </Button>
           </Link>
+          <div className="flex items-center gap-3">
+            <WalletDisplay />
+            <Button onClick={() => setShopOpen(true)} variant="outline" size="lg" className="gap-2">
+              <ShoppingBag className="h-5 w-5" />
+              Boutique
+            </Button>
+          </div>
         </div>
 
         <div className="text-center mb-8">
@@ -144,7 +175,16 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
 
         <div className="mb-8 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-8 border-4 border-border shadow-inner">
           <div className="w-80 h-80 mx-auto">
-            <PixelMonster state={state} actionAnimation={currentAction} traits={monster.traits} />
+            <PixelMonster
+              state={state}
+              actionAnimation={currentAction}
+              traits={monster.traits}
+              accessories={{
+                hat: monster.equipped_hat || undefined,
+                glasses: monster.equipped_glasses || undefined,
+                shoes: monster.equipped_shoes || undefined,
+              }}
+            />
           </div>
         </div>
 
@@ -164,9 +204,16 @@ export function MonsterInteraction({ monster }: { monster: Monster }) {
         />
 
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p className="font-medium">✨ Astuce : Utilise la bonne action selon l&apos;état de ton monstre !</p>
+          <p className="font-medium">✨ Astuce : Chaque action te rapporte 1 coin !</p>
         </div>
       </Card>
+
+      <ShopModal
+        open={shopOpen}
+        onOpenChange={setShopOpen}
+        monsterId={monster.id}
+        onAccessoryEquipped={handleAccessoryEquipped}
+      />
     </main>
   )
 }

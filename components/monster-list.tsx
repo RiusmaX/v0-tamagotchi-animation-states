@@ -3,13 +3,14 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Sparkles } from "lucide-react"
+import { Plus, Sparkles, Settings } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
+import { WalletDisplay } from "@/components/wallet-display"
 
 type Monster = {
   id: string
@@ -245,7 +246,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <Button
           onClick={handleCreateMonster}
           disabled={isCreating}
@@ -256,9 +257,18 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
           {isCreating ? "Création..." : "Créer un nouveau monstre"}
         </Button>
 
-        <Button onClick={handleLogout} variant="outline" size="lg">
-          Se déconnecter
-        </Button>
+        <div className="flex items-center gap-3">
+          <WalletDisplay />
+          <Link href="/settings">
+            <Button variant="outline" size="lg" className="gap-2 bg-transparent">
+              <Settings className="h-5 w-5" />
+              Paramètres
+            </Button>
+          </Link>
+          <Button onClick={handleLogout} variant="outline" size="lg">
+            Se déconnecter
+          </Button>
+        </div>
       </div>
 
       {monsters.length === 0 ? (

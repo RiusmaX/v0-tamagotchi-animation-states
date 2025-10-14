@@ -27,6 +27,11 @@ interface PixelMonsterProps {
   state: MonsterState
   actionAnimation?: ActionAnimation
   traits?: MonsterTraits
+  accessories?: {
+    hat?: string
+    glasses?: string
+    shoes?: string
+  }
 }
 
 const defaultTraits: MonsterTraits = {
@@ -42,7 +47,7 @@ const defaultTraits: MonsterTraits = {
   accessory: "none",
 }
 
-export function PixelMonster({ state, actionAnimation, traits = defaultTraits }: PixelMonsterProps) {
+export function PixelMonster({ state, actionAnimation, traits = defaultTraits, accessories }: PixelMonsterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const frameRef = useRef(0)
   const actionFrameRef = useRef(0)
@@ -66,7 +71,7 @@ export function PixelMonster({ state, actionAnimation, traits = defaultTraits }:
       } else {
         actionFrameRef.current = 0
       }
-      drawMonster(ctx, state, frameRef.current, actionAnimation, actionFrameRef.current, traits)
+      drawMonster(ctx, state, frameRef.current, actionAnimation, actionFrameRef.current, traits, accessories)
       animationId = requestAnimationFrame(animate)
     }
 
@@ -77,7 +82,7 @@ export function PixelMonster({ state, actionAnimation, traits = defaultTraits }:
         cancelAnimationFrame(animationId)
       }
     }
-  }, [state, actionAnimation, traits])
+  }, [state, actionAnimation, traits, accessories])
 
   return <canvas ref={canvasRef} className="pixel-art w-full h-full mx-auto" style={{ imageRendering: "pixelated" }} />
 }
@@ -89,6 +94,11 @@ function drawMonster(
   actionAnimation: ActionAnimation,
   actionFrame: number,
   traits: MonsterTraits,
+  accessories?: {
+    hat?: string
+    glasses?: string
+    shoes?: string
+  },
 ) {
   const pixelSize = 6
   const bounce = Math.sin(frame * 0.05) * 3
@@ -155,6 +165,10 @@ function drawMonster(
   drawAntenna(ctx, traits.antennaStyle, traits.antennaColor, traits.bobbleColor, bodyY, pixelSize, frame)
 
   drawAccessory(ctx, traits.accessory, traits.accentColor, bodyY, pixelSize, frame)
+
+  if (accessories) {
+    drawPurchasedAccessories(ctx, accessories, bodyY, pixelSize, frame)
+  }
 
   drawStateEffects(ctx, state, bodyY, pixelSize, frame)
 
@@ -477,6 +491,109 @@ function drawAccessory(
     case "none":
       break
   }
+}
+
+function drawPurchasedAccessories(
+  ctx: CanvasRenderingContext2D,
+  accessories: { hat?: string; glasses?: string; shoes?: string },
+  bodyY: number,
+  pixelSize: number,
+  frame: number,
+) {
+  // Draw hat
+  if (accessories.hat) {
+    ctx.fillStyle = getAccessoryColor(accessories.hat)
+
+    if (accessories.hat.includes("party")) {
+      // Party hat
+      ctx.fillRect(72, bodyY - 18, pixelSize * 4, pixelSize)
+      ctx.fillRect(75, bodyY - 24, pixelSize * 3, pixelSize * 2)
+      ctx.fillRect(78, bodyY - 30, pixelSize * 2, pixelSize * 2)
+      ctx.fillStyle = "#FFE66D"
+      ctx.fillRect(81, bodyY - 33, pixelSize, pixelSize)
+    } else if (accessories.hat.includes("crown")) {
+      // Crown
+      ctx.fillRect(69, bodyY - 15, pixelSize * 5, pixelSize)
+      ctx.fillRect(69, bodyY - 21, pixelSize, pixelSize * 2)
+      ctx.fillRect(78, bodyY - 24, pixelSize, pixelSize * 3)
+      ctx.fillRect(105, bodyY - 21, pixelSize, pixelSize * 2)
+      ctx.fillStyle = "#FFE66D"
+      ctx.fillRect(78, bodyY - 27, pixelSize, pixelSize)
+    } else if (accessories.hat.includes("cap")) {
+      // Cap
+      ctx.fillRect(69, bodyY - 12, pixelSize * 5, pixelSize * 2)
+      ctx.fillRect(63, bodyY - 9, pixelSize * 3, pixelSize)
+    }
+  }
+
+  // Draw glasses
+  if (accessories.glasses) {
+    ctx.fillStyle = getAccessoryColor(accessories.glasses)
+
+    if (accessories.glasses.includes("cool")) {
+      // Sunglasses
+      ctx.fillRect(60, bodyY + 21, pixelSize * 3, pixelSize * 2)
+      ctx.fillRect(90, bodyY + 21, pixelSize * 3, pixelSize * 2)
+      ctx.fillRect(69, bodyY + 24, pixelSize * 3, pixelSize)
+    } else if (accessories.glasses.includes("nerd")) {
+      // Round glasses
+      ctx.strokeStyle = getAccessoryColor(accessories.glasses)
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(66, bodyY + 24, 8, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.arc(96, bodyY + 24, 8, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.fillRect(74, bodyY + 24, pixelSize * 2, 2)
+    } else if (accessories.glasses.includes("star")) {
+      // Star glasses
+      ctx.fillRect(63, bodyY + 21, pixelSize * 2, pixelSize)
+      ctx.fillRect(66, bodyY + 18, pixelSize, pixelSize)
+      ctx.fillRect(66, bodyY + 27, pixelSize, pixelSize)
+      ctx.fillRect(93, bodyY + 21, pixelSize * 2, pixelSize)
+      ctx.fillRect(96, bodyY + 18, pixelSize, pixelSize)
+      ctx.fillRect(96, bodyY + 27, pixelSize, pixelSize)
+    }
+  }
+
+  // Draw shoes
+  if (accessories.shoes) {
+    ctx.fillStyle = getAccessoryColor(accessories.shoes)
+
+    if (accessories.shoes.includes("sneakers")) {
+      // Sneakers
+      ctx.fillRect(54, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      ctx.fillRect(102, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(57, bodyY + 60, pixelSize * 2, pixelSize)
+      ctx.fillRect(105, bodyY + 60, pixelSize * 2, pixelSize)
+    } else if (accessories.shoes.includes("boots")) {
+      // Boots
+      ctx.fillRect(54, bodyY + 57, pixelSize * 4, pixelSize * 5)
+      ctx.fillRect(102, bodyY + 57, pixelSize * 4, pixelSize * 5)
+    } else if (accessories.shoes.includes("slippers")) {
+      // Slippers
+      ctx.fillRect(54, bodyY + 60, pixelSize * 4, pixelSize)
+      ctx.fillRect(102, bodyY + 60, pixelSize * 4, pixelSize)
+      ctx.fillStyle = "#FFB5E8"
+      ctx.fillRect(57, bodyY + 57, pixelSize, pixelSize)
+      ctx.fillRect(105, bodyY + 57, pixelSize, pixelSize)
+    }
+  }
+}
+
+function getAccessoryColor(accessoryId: string): string {
+  if (accessoryId.includes("party")) return "#FF6B9D"
+  if (accessoryId.includes("crown")) return "#FFD700"
+  if (accessoryId.includes("cap")) return "#3B82F6"
+  if (accessoryId.includes("cool")) return "#2C2C2C"
+  if (accessoryId.includes("nerd")) return "#8B4513"
+  if (accessoryId.includes("star")) return "#FFE66D"
+  if (accessoryId.includes("sneakers")) return "#EF4444"
+  if (accessoryId.includes("boots")) return "#8B4513"
+  if (accessoryId.includes("slippers")) return "#FFB5E8"
+  return "#2C2C2C"
 }
 
 function drawStateEffects(
