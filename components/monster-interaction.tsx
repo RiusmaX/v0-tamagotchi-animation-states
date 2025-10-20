@@ -6,7 +6,7 @@ import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ShoppingBag } from "lucide-react"
+import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
@@ -14,6 +14,17 @@ import { addCoins } from "@/lib/currency"
 import { WalletDisplay } from "@/components/wallet-display"
 import { ShopModal } from "@/components/shop-modal"
 import { CoinAnimation } from "@/components/coin-animation"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useRouter } from "next/navigation"
 
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
 
@@ -41,7 +52,10 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [shopOpen, setShopOpen] = useState(false)
   const [monster, setMonster] = useState(initialMonster)
   const [coinTrigger, setCoinTrigger] = useState(0)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const saveState = async () => {
@@ -130,6 +144,23 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     }
   }
 
+  const handleDeleteMonster = async () => {
+    setIsDeleting(true)
+
+    try {
+      const { error } = await supabase.from("monsters").delete().eq("id", monster.id).eq("user_id", monster.user_id)
+
+      if (error) throw error
+
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error) {
+      console.error("[v0] Error deleting monster:", error)
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+    }
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -151,7 +182,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
       <Card className="w-full max-w-2xl p-8 shadow-2xl border-4 border-border bg-card/95 backdrop-blur-sm relative z-10">
         <CoinAnimation trigger={coinTrigger} />
         <div className="flex items-center justify-between mb-6">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button variant="outline" size="lg">
               <ArrowLeft className="mr-2 h-5 w-5" />
               Retour
@@ -162,6 +193,15 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
             <Button onClick={() => setShopOpen(true)} variant="outline" size="lg" className="gap-2">
               <ShoppingBag className="h-5 w-5" />
               Boutique
+            </Button>
+            <Button
+              onClick={() => setDeleteDialogOpen(true)}
+              variant="outline"
+              size="lg"
+              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-5 w-5" />
+              Supprimer
             </Button>
           </div>
         </div>
@@ -214,6 +254,28 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         monsterId={monster.id}
         onAccessoryEquipped={handleAccessoryEquipped}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer {monster.name} ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce monstre ? Cette action est irréversible et toutes les données
+              associées seront perdues définitivement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMonster}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
