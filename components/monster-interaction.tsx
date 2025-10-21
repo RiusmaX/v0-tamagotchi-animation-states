@@ -81,28 +81,31 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
       clearTimeout(saveTimeoutRef.current)
     }
 
-    saveTimeoutRef.current = setTimeout(async () => {
-      const { error } = await supabase
-        .from("monsters")
-        .update({
-          current_state: state,
-          last_state_change: new Date().toISOString(),
-        })
-        .eq("id", monster.id)
+    // Only debounce automatic state changes (when not animating)
+    if (!isAnimating) {
+      saveTimeoutRef.current = setTimeout(async () => {
+        const { error } = await supabase
+          .from("monsters")
+          .update({
+            current_state: state,
+            last_state_change: new Date().toISOString(),
+          })
+          .eq("id", monster.id)
 
-      if (error) {
-        console.error("[v0] Error saving monster state:", error)
-      } else {
-        emitMonsterUpdate(monster.id, state)
-      }
-    }, 1000)
+        if (error) {
+          console.error("[v0] Error saving monster state:", error)
+        } else {
+          emitMonsterUpdate(monster.id, state)
+        }
+      }, 1000)
+    }
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [state, monster.id, supabase])
+  }, [state, monster.id, supabase, isAnimating])
 
   useEffect(() => {
     const scheduleNextStateChange = () => {
@@ -124,6 +127,25 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     return () => clearTimeout(timeout)
   }, [state, isAnimating])
 
+  const saveStateImmediately = useCallback(
+    async (newState: MonsterState) => {
+      const { error } = await supabase
+        .from("monsters")
+        .update({
+          current_state: newState,
+          last_state_change: new Date().toISOString(),
+        })
+        .eq("id", monster.id)
+
+      if (error) {
+        console.error("[v0] Error saving monster state:", error)
+      } else {
+        emitMonsterUpdate(monster.id, newState)
+      }
+    },
+    [monster.id, supabase],
+  )
+
   const handleAction = useCallback(
     async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
       play("action", 0.3)
@@ -144,30 +166,35 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         gift: "bored",
       }
 
-      if (state === actionStateMap[action]) {
-        setTimeout(() => {
-          setState("happy")
-          setIsAnimating(false)
-          setCurrentAction(null)
-        }, 1500)
-      } else if (action === "gift" && state === "happy") {
-        setTimeout(() => {
-          setState("excited")
-          setIsAnimating(false)
-          setCurrentAction(null)
+      let newState: MonsterState = state
 
+      if (state === actionStateMap[action]) {
+        newState = "happy"
+      } else if (action === "gift" && state === "happy") {
+        newState = "excited"
+      }
+
+      // Save immediately to database
+      if (newState !== state) {
+        setState(newState)
+        await saveStateImmediately(newState)
+      }
+
+      // Keep animation for visual feedback
+      setTimeout(() => {
+        setIsAnimating(false)
+        setCurrentAction(null)
+
+        // If excited from gift, return to happy after animation
+        if (action === "gift" && newState === "excited") {
           setTimeout(() => {
             setState("happy")
+            saveStateImmediately("happy")
           }, 3000)
-        }, 1500)
-      } else {
-        setTimeout(() => {
-          setIsAnimating(false)
-          setCurrentAction(null)
-        }, 1500)
-      }
+        }
+      }, 1500)
     },
-    [state, play],
+    [state, play, saveStateImmediately],
   )
 
   const handleAccessoryEquipped = useCallback(async () => {
