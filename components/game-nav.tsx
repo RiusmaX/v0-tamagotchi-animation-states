@@ -33,21 +33,21 @@ export function GameNav() {
 
   return (
     <nav className="hidden lg:flex sticky top-0 z-50 w-full border-b bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-xl">
-      <div className="container flex h-20 items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-3 group">
+      <div className="container flex h-16 items-center justify-between px-6">
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative bg-gradient-to-r from-pink-500 to-purple-500 p-3 rounded-full">
-                <Sparkles className="h-6 w-6 text-white" />
+              <div className="relative bg-gradient-to-r from-pink-500 to-purple-500 p-2 rounded-full">
+                <Sparkles className="h-5 w-5 text-white" />
               </div>
             </div>
-            <span className="text-3xl font-bold tracking-wider bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold tracking-wider bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
               Tamagotchi
             </span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link href="/dashboard">
               <Button
                 variant={isActive("/dashboard") ? "default" : "ghost"}
@@ -90,7 +90,7 @@ export function GameNav() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <WalletDisplay />
           <Link href="/profile">
             <Avatar className="h-10 w-10 border-2 border-purple-500 cursor-pointer hover:border-purple-400 transition-colors">

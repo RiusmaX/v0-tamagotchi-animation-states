@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
 import { WalletDisplay } from "@/components/wallet-display"
+import { monsterEvents } from "@/lib/monster-events"
 
 type Monster = {
   id: string
@@ -75,7 +76,7 @@ function adjustColorOpacity(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
-const monsterNames = [
+const monsterNamesList = [
   "Bubbles",
   "Pixel",
   "Mochi",
@@ -189,19 +190,54 @@ MonsterCard.displayName = "MonsterCard"
 export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [displayStates, setDisplayStates] = useState<Record<string, string>>({})
+  const [monsterNames, setMonsterNames] = useState<Record<string, string>>({})
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     const initialStates: Record<string, string> = {}
+    const initialNames: Record<string, string> = {}
     monsters.forEach((monster) => {
       initialStates[monster.id] = calculateMonsterState(
         monster.last_state_change,
         monster.current_state as MonsterState,
       )
+      initialNames[monster.id] = monster.name
     })
     setDisplayStates(initialStates)
+    setMonsterNames(initialNames)
   }, [monsters])
+
+  useEffect(() => {
+    const handleMonsterUpdate = (data: { monsterId: string; state: string }) => {
+      setDisplayStates((prev) => ({
+        ...prev,
+        [data.monsterId]: data.state,
+      }))
+    }
+
+    const handleMonsterRenamed = (data: { monsterId: string; name: string }) => {
+      setMonsterNames((prev) => ({
+        ...prev,
+        [data.monsterId]: data.name,
+      }))
+    }
+
+    const handleMonsterDeleted = () => {
+      // Refresh the page to update the list
+      router.refresh()
+    }
+
+    monsterEvents.on("monster-update", handleMonsterUpdate)
+    monsterEvents.on("monster-renamed", handleMonsterRenamed)
+    monsterEvents.on("monster-deleted", handleMonsterDeleted)
+
+    return () => {
+      monsterEvents.off("monster-update", handleMonsterUpdate)
+      monsterEvents.off("monster-renamed", handleMonsterRenamed)
+      monsterEvents.off("monster-deleted", handleMonsterDeleted)
+    }
+  }, [router])
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -230,7 +266,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
             .eq("id", update.id)
         }
       }
-    }, 30000) // Increased to 30 seconds to reduce load
+    }, 30000)
 
     return () => clearInterval(interval)
   }, [monsters, supabase])
@@ -239,7 +275,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
     setIsCreating(true)
 
     const traits = generateRandomTraits()
-    const randomName = monsterNames[Math.floor(Math.random() * monsterNames.length)]
+    const randomName = monsterNamesList[Math.floor(Math.random() * monsterNamesList.length)]
 
     try {
       const { data, error } = await supabase
@@ -265,9 +301,10 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
   const monsterCards = useMemo(() => {
     return monsters.map((monster) => {
       const displayState = displayStates[monster.id] || monster.current_state
-      return <MonsterCard key={monster.id} monster={monster} displayState={displayState} />
+      const displayName = monsterNames[monster.id] || monster.name
+      return <MonsterCard key={monster.id} monster={{ ...monster, name: displayName }} displayState={displayState} />
     })
-  }, [monsters, displayStates])
+  }, [monsters, displayStates, monsterNames])
 
   return (
     <div className="space-y-8">

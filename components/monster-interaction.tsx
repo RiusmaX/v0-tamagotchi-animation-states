@@ -15,6 +15,7 @@ import { WalletDisplay } from "@/components/wallet-display"
 import { ShopModal } from "@/components/shop-modal"
 import { CoinAnimation } from "@/components/coin-animation"
 import { useSound } from "@/hooks/use-sound"
+import { emitMonsterUpdate, emitMonsterDeleted, emitMonsterRenamed } from "@/lib/monster-events"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,8 +92,10 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
       if (error) {
         console.error("[v0] Error saving monster state:", error)
+      } else {
+        emitMonsterUpdate(monster.id, state)
       }
-    }, 1000) // Debounce by 1 second
+    }, 1000)
 
     return () => {
       if (saveTimeoutRef.current) {
@@ -183,6 +186,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
       if (error) throw error
 
+      emitMonsterDeleted(monster.id)
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
@@ -211,6 +215,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
       setMonster({ ...monster, name: newName.trim() })
       setRenameDialogOpen(false)
+      emitMonsterRenamed(monster.id, newName.trim())
       router.refresh()
     } catch (error) {
       console.error("[v0] Error renaming monster:", error)
