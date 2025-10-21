@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { Coins } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { getUserCoins } from "@/lib/currency"
 import { Skeleton } from "@/components/ui/skeleton"
 import { walletEvents } from "@/lib/wallet-events"
 
 export function WalletDisplay() {
+  const router = useRouter()
   const [coins, setCoins] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -45,9 +47,12 @@ export function WalletDisplay() {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-amber-100 px-4 py-2 rounded-full border-2 border-yellow-400 shadow-md">
+    <button
+      onClick={() => router.push("/buy-coins")}
+      className="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-amber-100 px-4 py-2 rounded-full border-2 border-yellow-400 shadow-md hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
+    >
       <Coins className="h-5 w-5 text-yellow-600" />
-      <span className="font-bold text-yellow-800">{coins}</span>
-    </div>
+      <span className="font-bold text-yellow-800 tracking-wider">{coins}</span>
+    </button>
   )
 }

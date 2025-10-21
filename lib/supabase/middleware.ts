@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const publicRoutes = ["/", "/pricing"]
+  const publicRoutes = ["/"]
   const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth")
 

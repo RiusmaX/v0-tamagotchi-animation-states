@@ -3,11 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, Home, CreditCard } from "lucide-react"
+import { Sparkles } from "lucide-react"
 
 export function PublicHeader() {
   const pathname = usePathname()
-  const isActive = (path: string) => pathname === path
+
+  const scrollToSection = (sectionId: string) => {
+    if (pathname !== "/") {
+      window.location.href = `/#${sectionId}`
+    } else {
+      const element = document.getElementById(sectionId)
+      element?.scrollIntoView({ behavior: "smooth" })
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -26,31 +34,24 @@ export function PublicHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          <Link
-            href="/"
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-              isActive("/")
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            }`}
+          <button
+            onClick={() => scrollToSection("accueil")}
+            className="px-3 py-2 text-base font-bold rounded-md transition-all text-muted-foreground hover:bg-accent hover:text-accent-foreground tracking-wider"
           >
-            <Home className="h-4 w-4" />
             Accueil
-          </Link>
-          <Link
-            href="/pricing"
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-              isActive("/pricing")
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            }`}
+          </button>
+          <button
+            onClick={() => scrollToSection("fonctionnalites")}
+            className="px-3 py-2 text-base font-bold rounded-md transition-all text-muted-foreground hover:bg-accent hover:text-accent-foreground tracking-wider"
           >
-            <CreditCard className="h-4 w-4" />
-            Tarifs
-          </Link>
+            Fonctionnalités
+          </button>
         </nav>
 
-        <Button asChild className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90">
+        <Button
+          asChild
+          className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 tracking-wider text-base font-bold"
+        >
           <Link href="/dashboard">Commencer</Link>
         </Button>
       </div>
