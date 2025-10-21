@@ -15,7 +15,8 @@ export const config = {
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * - auth routes (login, sign-up, etc.)
      * - public routes (landing page, pricing)
+     * - api/webhooks (webhook endpoints)
      */
-    "/((?!_next/static|_next/image|favicon.ico|auth|pricing|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)(?!^/$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|auth|pricing|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)(?!^/$).*)",
   ],
 }

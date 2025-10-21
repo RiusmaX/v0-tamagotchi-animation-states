@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, Coins, Loader2 } from "lucide-react"
-import { useSound } from "@/hooks/use-sound"
 
 export default function SuccessContent({ sessionId }: { sessionId?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const playSound = useSound()
 
   useEffect(() => {
     if (!sessionId) {
@@ -20,8 +18,32 @@ export default function SuccessContent({ sessionId }: { sessionId?: string }) {
       return
     }
 
-    // Play success sound
-    playSound("success")
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.type = "square"
+      const now = audioContext.currentTime
+
+      // Success melody
+      const notes = [523.25, 659.25, 783.99]
+      notes.forEach((freq, i) => {
+        oscillator.frequency.setValueAtTime(freq, now + i * 0.15)
+      })
+
+      gainNode.gain.setValueAtTime(0.1, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5)
+
+      oscillator.start(now)
+      oscillator.stop(now + 0.5)
+    } catch (e) {
+      // Silently fail if audio doesn't work
+      console.log("Audio not available")
+    }
 
     // Wait a bit to ensure webhook has processed
     const timer = setTimeout(() => {
@@ -29,7 +51,7 @@ export default function SuccessContent({ sessionId }: { sessionId?: string }) {
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [sessionId, playSound])
+  }, [sessionId])
 
   if (error) {
     return (
