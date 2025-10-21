@@ -1,10 +1,11 @@
 "use client"
-import { Coins, Sparkles, TrendingUp, Zap } from "lucide-react"
+import { Coins, Sparkles, TrendingUp, Zap, ArrowLeft } from "lucide-react"
 import { COIN_PACKAGES } from "@/lib/products"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import StripeCheckout from "@/components/stripe-checkout"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function BuyCoinsClient() {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
@@ -15,6 +16,15 @@ export default function BuyCoinsClient() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-6">
+        <Link href="/dashboard">
+          <Button variant="outline" size="lg" className="tracking-wider bg-transparent">
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Retour au Dashboard
+          </Button>
+        </Link>
+      </div>
+
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-wider">Acheter des Pièces</h1>
         <p className="text-lg text-muted-foreground tracking-wide">

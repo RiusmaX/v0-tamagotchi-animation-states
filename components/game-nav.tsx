@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, Settings, User } from "lucide-react"
+import { Sparkles, User } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -73,19 +73,6 @@ export function GameNav() {
             >
               <User className="h-4 w-4 mr-2" />
               Profil
-            </Button>
-          </Link>
-          <Link href="/settings">
-            <Button
-              variant={isActive("/settings") ? "default" : "ghost"}
-              className={
-                isActive("/settings")
-                  ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                  : "hover:bg-purple-100"
-              }
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Paramètres
             </Button>
           </Link>
         </div>

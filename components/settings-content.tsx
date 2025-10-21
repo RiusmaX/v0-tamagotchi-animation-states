@@ -30,8 +30,8 @@ export function SettingsContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-8 mt-8">
-        <Link href="/">
-          <Button variant="outline" size="lg">
+        <Link href="/profile">
+          <Button variant="outline" size="lg" className="tracking-wider bg-transparent">
             <ArrowLeft className="mr-2 h-5 w-5" />
             Retour
           </Button>

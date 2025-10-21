@@ -4,10 +4,12 @@ import type { Metadata } from "next"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { WalletDisplay } from "@/components/wallet-display"
-import { Sparkles, Mail, Calendar } from "lucide-react"
+import { Sparkles, Mail, Calendar, Settings } from "lucide-react"
 import { Suspense } from "react"
 import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton"
 import { LogoutButton } from "@/components/logout-button"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
   title: "Mon Profil",
@@ -106,6 +108,24 @@ async function ProfileContent() {
             <div className="flex justify-center">
               <WalletDisplay />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-blue-200 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-blue-500" />
+              Paramètres
+            </CardTitle>
+            <CardDescription>Gérer vos préférences</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/settings">
+              <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
+                <Settings className="h-4 w-4 mr-2" />
+                Accéder aux paramètres
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

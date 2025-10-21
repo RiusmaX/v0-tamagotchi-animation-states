@@ -29,7 +29,7 @@ const getOwnedColumnName = (type: AccessoryType): keyof MonsterAccessories => {
   const columnMap: Record<AccessoryType, keyof MonsterAccessories> = {
     hat: "owned_hats",
     glasses: "owned_glasses",
-    shoe: "owned_shoes",
+    shoes: "owned_shoes",
   }
   return columnMap[type]
 }
@@ -38,7 +38,7 @@ const getEquippedColumnName = (type: AccessoryType): keyof MonsterAccessories =>
   const columnMap: Record<AccessoryType, keyof MonsterAccessories> = {
     hat: "equipped_hat",
     glasses: "equipped_glasses",
-    shoe: "equipped_shoes",
+    shoes: "equipped_shoes",
   }
   return columnMap[type]
 }
