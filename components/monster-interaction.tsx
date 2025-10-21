@@ -14,6 +14,7 @@ import { addCoins } from "@/lib/currency"
 import { WalletDisplay } from "@/components/wallet-display"
 import { ShopModal } from "@/components/shop-modal"
 import { CoinAnimation } from "@/components/coin-animation"
+import { useSound } from "@/hooks/use-sound"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +71,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [isRenaming, setIsRenaming] = useState(false)
   const supabase = createClient()
   const router = useRouter()
+  const { play } = useSound()
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -121,10 +123,12 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
   const handleAction = useCallback(
     async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
+      play("action", 0.3)
       setIsAnimating(true)
       setCurrentAction(action)
 
       await addCoins(1)
+      play("coin", 0.4)
       setCoinTrigger((prev) => prev + 1)
 
       const actionStateMap = {
@@ -160,7 +164,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         }, 1500)
       }
     },
-    [state],
+    [state, play],
   )
 
   const handleAccessoryEquipped = useCallback(async () => {

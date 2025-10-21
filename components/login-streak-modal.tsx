@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Coins, Flame } from "lucide-react"
+import { useSound } from "@/hooks/use-sound"
 
 interface LoginStreakModalProps {
   streak: number
@@ -14,6 +15,16 @@ interface LoginStreakModalProps {
 
 export function LoginStreakModal({ streak, coinsEarned, message, onClose }: LoginStreakModalProps) {
   const [open, setOpen] = useState(true)
+  const { play } = useSound()
+
+  useEffect(() => {
+    if (open && coinsEarned > 0) {
+      play("success", 0.5)
+      setTimeout(() => {
+        play("coin", 0.4)
+      }, 300)
+    }
+  }, [open, coinsEarned, play])
 
   const handleClose = () => {
     setOpen(false)

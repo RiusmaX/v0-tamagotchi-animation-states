@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
@@ -10,6 +9,13 @@ import { createClient } from "@/lib/supabase/server"
 import { NavigationWrapper } from "@/components/navigation-wrapper" // Import NavigationWrapper component
 import { LoginStreakChecker } from "@/components/login-streak-checker"
 import "./globals.css"
+import { Jersey_25 } from "next/font/google"
+
+const jersey = Jersey_25({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-jersey",
+})
 
 export const metadata: Metadata = {
   title: {
@@ -93,7 +99,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className={`font-sans ${jersey.variable} ${GeistMono.variable}`}>
         <LayoutContent>{children}</LayoutContent>
         <Analytics />
       </body>

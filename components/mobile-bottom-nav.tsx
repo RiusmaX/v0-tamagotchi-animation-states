@@ -23,7 +23,7 @@ export function MobileBottomNav() {
             <Sparkles className="h-6 w-6" />
             {isActive("/dashboard") && <div className="absolute inset-0 bg-white/30 rounded-full animate-ping" />}
           </div>
-          <span className="text-xs font-medium">Monstres</span>
+          <span className="text-sm font-bold tracking-wide">Monstres</span>
         </Link>
 
         <Link
@@ -38,7 +38,7 @@ export function MobileBottomNav() {
             <User className="h-6 w-6" />
             {isActive("/profile") && <div className="absolute inset-0 bg-white/30 rounded-full animate-ping" />}
           </div>
-          <span className="text-xs font-medium">Profil</span>
+          <span className="text-sm font-bold tracking-wide">Profil</span>
         </Link>
       </div>
     </nav>

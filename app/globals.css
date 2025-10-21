@@ -76,7 +76,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-jersey);
   --font-mono: var(--font-geist-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -122,6 +122,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Added better letter-spacing for Jersey font to improve readability */
+  button,
+  a,
+  .nav-text {
+    letter-spacing: 0.025em;
   }
 }
 
