@@ -27,7 +27,7 @@ export function WalletDisplay() {
     const interval = setInterval(async () => {
       const userCoins = await getUserCoins()
       setCoins(userCoins)
-    }, 3000)
+    }, 30000)
 
     return () => {
       clearInterval(interval)

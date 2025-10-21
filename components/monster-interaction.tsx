@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
@@ -71,8 +71,14 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const supabase = createClient()
   const router = useRouter()
 
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
-    const saveState = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
       const { error } = await supabase
         .from("monsters")
         .update({
@@ -84,9 +90,13 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
       if (error) {
         console.error("[v0] Error saving monster state:", error)
       }
-    }
+    }, 1000) // Debounce by 1 second
 
-    saveState()
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
   }, [state, monster.id, supabase])
 
   useEffect(() => {
@@ -109,54 +119,57 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     return () => clearTimeout(timeout)
   }, [state, isAnimating])
 
-  const handleAction = async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
-    setIsAnimating(true)
-    setCurrentAction(action)
+  const handleAction = useCallback(
+    async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
+      setIsAnimating(true)
+      setCurrentAction(action)
 
-    await addCoins(1)
-    setCoinTrigger((prev) => prev + 1)
+      await addCoins(1)
+      setCoinTrigger((prev) => prev + 1)
 
-    const actionStateMap = {
-      play: "bored",
-      feed: "hungry",
-      sleep: "sleepy",
-      wash: "dirty",
-      heal: "sick",
-      hug: "sad",
-      gift: "bored",
-    }
+      const actionStateMap = {
+        play: "bored",
+        feed: "hungry",
+        sleep: "sleepy",
+        wash: "dirty",
+        heal: "sick",
+        hug: "sad",
+        gift: "bored",
+      }
 
-    if (state === actionStateMap[action]) {
-      setTimeout(() => {
-        setState("happy")
-        setIsAnimating(false)
-        setCurrentAction(null)
-      }, 1500)
-    } else if (action === "gift" && state === "happy") {
-      setTimeout(() => {
-        setState("excited")
-        setIsAnimating(false)
-        setCurrentAction(null)
-
+      if (state === actionStateMap[action]) {
         setTimeout(() => {
           setState("happy")
-        }, 3000)
-      }, 1500)
-    } else {
-      setTimeout(() => {
-        setIsAnimating(false)
-        setCurrentAction(null)
-      }, 1500)
-    }
-  }
+          setIsAnimating(false)
+          setCurrentAction(null)
+        }, 1500)
+      } else if (action === "gift" && state === "happy") {
+        setTimeout(() => {
+          setState("excited")
+          setIsAnimating(false)
+          setCurrentAction(null)
 
-  const handleAccessoryEquipped = async () => {
+          setTimeout(() => {
+            setState("happy")
+          }, 3000)
+        }, 1500)
+      } else {
+        setTimeout(() => {
+          setIsAnimating(false)
+          setCurrentAction(null)
+        }, 1500)
+      }
+    },
+    [state],
+  )
+
+  const handleAccessoryEquipped = useCallback(async () => {
     const { data, error } = await supabase.from("monsters").select("*").eq("id", monster.id).single()
 
     if (!error && data) {
       setMonster(data)
     }
-  }
+  }, [monster.id, supabase])
 
   const handleDeleteMonster = async () => {
     setIsDeleting(true)
@@ -273,7 +286,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           </p>
         </div>
 
-        <div className="mb-6 sm:mb-8 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-border shadow-inner">
+        <div className="mb-6 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-border shadow-inner sm:mb-0">
           <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 mx-auto">
             <PixelMonster
               state={state}

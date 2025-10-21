@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
 import { WalletDisplay } from "@/components/wallet-display"
-import { MonsterCardSkeleton } from "@/components/skeletons/monster-card-skeleton"
 
 type Monster = {
   id: string
@@ -146,26 +145,52 @@ const stateColors = {
   },
 }
 
+const MonsterCard = memo(({ monster, displayState }: { monster: Monster; displayState: string }) => {
+  const stateStyle = stateColors[displayState as keyof typeof stateColors] || stateColors.happy
+
+  return (
+    <Link key={monster.id} href={`/monster/${monster.id}`}>
+      <Card
+        className={`p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 ${stateStyle.border} bg-card/95 backdrop-blur-sm`}
+      >
+        <div className="space-y-4">
+          <div
+            className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500`}
+          >
+            <div className="w-48 h-48 mx-auto">
+              <PixelMonster
+                state={displayState as any}
+                actionAnimation={null}
+                traits={monster.traits}
+                accessories={{
+                  hat: monster.equipped_hat,
+                  glasses: monster.equipped_glasses,
+                  shoes: monster.equipped_shoes,
+                }}
+              />
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
+            <Badge
+              className={`${stateStyle.bg} ${stateStyle.text} ${stateStyle.border} border-2 text-sm font-semibold px-3 py-1`}
+            >
+              {stateStyle.label}
+            </Badge>
+          </div>
+        </div>
+      </Card>
+    </Link>
+  )
+})
+
+MonsterCard.displayName = "MonsterCard"
+
 export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [displayStates, setDisplayStates] = useState<Record<string, string>>({})
-  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
-
-  useEffect(() => {
-    router.refresh()
-    setIsInitialLoading(false)
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        router.refresh()
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [router])
 
   useEffect(() => {
     const initialStates: Record<string, string> = {}
@@ -204,14 +229,13 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
             })
             .eq("id", update.id)
         }
-        router.refresh()
       }
-    }, 10000)
+    }, 30000) // Increased to 30 seconds to reduce load
 
     return () => clearInterval(interval)
-  }, [monsters, supabase, router])
+  }, [monsters, supabase])
 
-  const handleCreateMonster = async () => {
+  const handleCreateMonster = useCallback(async () => {
     setIsCreating(true)
 
     const traits = generateRandomTraits()
@@ -232,12 +256,18 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
       if (error) throw error
 
       router.push(`/monster/${data.id}`)
-      router.refresh()
     } catch (error) {
       console.error("[v0] Error creating monster:", error)
       setIsCreating(false)
     }
-  }
+  }, [userId, supabase, router])
+
+  const monsterCards = useMemo(() => {
+    return monsters.map((monster) => {
+      const displayState = displayStates[monster.id] || monster.current_state
+      return <MonsterCard key={monster.id} monster={monster} displayState={displayState} />
+    })
+  }, [monsters, displayStates])
 
   return (
     <div className="space-y-8">
@@ -255,13 +285,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
         <WalletDisplay />
       </div>
 
-      {isInitialLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <MonsterCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : monsters.length === 0 ? (
+      {monsters.length === 0 ? (
         <Card className="p-12 text-center border-4 border-dashed">
           <div className="space-y-4">
             <Sparkles className="h-16 w-16 mx-auto text-purple-400" />
@@ -270,47 +294,7 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {monsters.map((monster) => {
-            const displayState = displayStates[monster.id] || monster.current_state
-            const stateStyle = stateColors[displayState as keyof typeof stateColors] || stateColors.happy
-
-            return (
-              <Link key={monster.id} href={`/monster/${monster.id}`}>
-                <Card
-                  className={`p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 ${stateStyle.border} bg-card/95 backdrop-blur-sm`}
-                >
-                  <div className="space-y-4">
-                    <div
-                      className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500`}
-                    >
-                      <div className="w-48 h-48 mx-auto">
-                        <PixelMonster
-                          state={displayState as any}
-                          actionAnimation={null}
-                          traits={monster.traits}
-                          accessories={{
-                            hat: monster.equipped_hat,
-                            glasses: monster.equipped_glasses,
-                            shoes: monster.equipped_shoes,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-center space-y-2">
-                      <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
-                      <Badge
-                        className={`${stateStyle.bg} ${stateStyle.text} ${stateStyle.border} border-2 text-sm font-semibold px-3 py-1`}
-                      >
-                        {stateStyle.label}
-                      </Badge>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{monsterCards}</div>
       )}
     </div>
   )

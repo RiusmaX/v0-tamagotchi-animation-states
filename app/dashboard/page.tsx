@@ -2,13 +2,13 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { MonsterList } from "@/components/monster-list"
 import type { Metadata } from "next"
-import { Suspense } from "react"
-import { MonsterCardSkeleton } from "@/components/skeletons/monster-card-skeleton"
 
 export const metadata: Metadata = {
   title: "Mes Monstres",
   description: "Gérez tous vos petits monstres adorables",
 }
+
+export const revalidate = 30
 
 async function DashboardContent() {
   const supabase = await createClient()
@@ -55,23 +55,13 @@ export default function DashboardPage() {
 
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12 mt-8">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-3 font-sans">
+          <h1 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-3 font-sans text-5xl">
             🐾 Mes Tamagotchis
           </h1>
           <p className="text-muted-foreground text-xl font-medium">Gérez tous vos petits monstres adorables</p>
         </div>
 
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <MonsterCardSkeleton key={i} />
-              ))}
-            </div>
-          }
-        >
-          <DashboardContent />
-        </Suspense>
+        <DashboardContent />
       </div>
     </main>
   )
