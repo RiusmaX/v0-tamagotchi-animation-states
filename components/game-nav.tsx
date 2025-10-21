@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, LogOut, Settings, User } from "lucide-react"
+import { Sparkles, Settings, User } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -28,11 +28,6 @@ export function GameNav() {
 
     return () => subscription.unsubscribe()
   }, [supabase.auth])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = "/"
-  }
 
   const isActive = (path: string) => pathname === path
 
@@ -97,17 +92,13 @@ export function GameNav() {
 
         <div className="flex items-center gap-4">
           <WalletDisplay />
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-purple-500">
+          <Link href="/profile">
+            <Avatar className="h-10 w-10 border-2 border-purple-500 cursor-pointer hover:border-purple-400 transition-colors">
               <AvatarFallback className="bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold">
                 {user?.email?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:bg-red-100 hover:text-red-600">
-              <LogOut className="h-4 w-4 mr-2" />
-              Déconnexion
-            </Button>
-          </div>
+          </Link>
         </div>
       </div>
     </nav>
