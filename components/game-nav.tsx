@@ -33,8 +33,9 @@ export function GameNav() {
 
   return (
     <nav className="hidden lg:flex sticky top-0 z-50 w-full border-b bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-xl">
-      <div className="container flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-6">
+      <div className="container grid grid-cols-3 h-16 items-center px-6">
+        {/* Left section: Logo */}
+        <div className="flex items-center justify-start">
           <Link href="/dashboard" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
@@ -46,51 +47,51 @@ export function GameNav() {
               Tamagotchi
             </span>
           </Link>
-
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard">
-              <Button
-                variant={isActive("/dashboard") ? "default" : "ghost"}
-                className={
-                  isActive("/dashboard")
-                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                    : "hover:bg-purple-100"
-                }
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Mes Monstres
-              </Button>
-            </Link>
-            <Link href="/profile">
-              <Button
-                variant={isActive("/profile") ? "default" : "ghost"}
-                className={
-                  isActive("/profile")
-                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                    : "hover:bg-purple-100"
-                }
-              >
-                <User className="h-4 w-4 mr-2" />
-                Profil
-              </Button>
-            </Link>
-            <Link href="/settings">
-              <Button
-                variant={isActive("/settings") ? "default" : "ghost"}
-                className={
-                  isActive("/settings")
-                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                    : "hover:bg-purple-100"
-                }
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Paramètres
-              </Button>
-            </Link>
-          </div>
         </div>
 
-        <div className="flex items-center gap-5">
+        {/* Center section: Navigation buttons */}
+        <div className="flex items-center justify-center gap-3">
+          <Link href="/dashboard">
+            <Button
+              variant={isActive("/dashboard") ? "default" : "ghost"}
+              className={
+                isActive("/dashboard")
+                  ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
+                  : "hover:bg-purple-100"
+              }
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Mes Monstres
+            </Button>
+          </Link>
+          <Link href="/profile">
+            <Button
+              variant={isActive("/profile") ? "default" : "ghost"}
+              className={
+                isActive("/profile") ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white" : "hover:bg-purple-100"
+              }
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profil
+            </Button>
+          </Link>
+          <Link href="/settings">
+            <Button
+              variant={isActive("/settings") ? "default" : "ghost"}
+              className={
+                isActive("/settings")
+                  ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
+                  : "hover:bg-purple-100"
+              }
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Paramètres
+            </Button>
+          </Link>
+        </div>
+
+        {/* Right section: Wallet and Avatar */}
+        <div className="flex items-center justify-end gap-5">
           <WalletDisplay />
           <Link href="/profile">
             <Avatar className="h-10 w-10 border-2 border-purple-500 cursor-pointer hover:border-purple-400 transition-colors">

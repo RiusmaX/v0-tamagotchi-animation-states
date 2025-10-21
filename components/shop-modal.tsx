@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ACCESSORIES, type Accessory, type AccessoryType, getUserCoins, spendCoins } from "@/lib/currency"
-import { Coins, ShoppingBag } from "lucide-react"
+import { Coins, ShoppingBag, Check } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Toast, ToastContainer } from "@/components/ui/toast"
 
@@ -16,10 +16,20 @@ interface ShopModalProps {
   onAccessoryEquipped: () => void
 }
 
+interface MonsterAccessories {
+  equipped_hat: string | null
+  equipped_glasses: string | null
+  equipped_shoes: string | null
+  owned_hats: string[]
+  owned_glasses: string[]
+  owned_shoes: string[]
+}
+
 export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }: ShopModalProps) {
   const [coins, setCoins] = useState(0)
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null)
   const [purchasing, setPurchasing] = useState(false)
+  const [monsterAccessories, setMonsterAccessories] = useState<MonsterAccessories | null>(null)
   const [toast, setToast] = useState<{
     show: boolean
     title: string
@@ -30,6 +40,7 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
   useEffect(() => {
     if (open) {
       loadCoins()
+      loadMonsterAccessories()
     }
   }, [open])
 
@@ -38,28 +49,61 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     setCoins(userCoins)
   }
 
-  const handlePurchase = async (accessory: Accessory) => {
-    if (purchasing || coins < accessory.price) return
+  const loadMonsterAccessories = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("monsters")
+      .select("equipped_hat, equipped_glasses, equipped_shoes, owned_hats, owned_glasses, owned_shoes")
+      .eq("id", monsterId)
+      .single()
 
-    setPurchasing(true)
-    setSelectedAccessory(accessory)
-
-    // Spend coins
-    const success = await spendCoins(accessory.price)
-
-    if (!success) {
-      setToast({
-        show: true,
-        title: "Pas assez de coins",
-        description: `Il vous faut ${accessory.price} coins pour acheter cet accessoire.`,
-        variant: "error",
-      })
-      setPurchasing(false)
-      setTimeout(() => setToast(null), 3000)
+    if (error) {
+      console.error("[v0] Error loading monster accessories:", error)
       return
     }
 
-    // Equip accessory on monster
+    setMonsterAccessories(data)
+  }
+
+  const handleAction = async (accessory: Accessory) => {
+    if (purchasing) return
+
+    const isOwned = isAccessoryOwned(accessory)
+    const isEquipped = isAccessoryEquipped(accessory)
+
+    // If already equipped, unequip it
+    if (isEquipped) {
+      await handleUnequip(accessory)
+      return
+    }
+
+    // If owned but not equipped, equip it for free
+    if (isOwned) {
+      await handleEquip(accessory)
+      return
+    }
+
+    // If not owned, purchase it
+    await handlePurchase(accessory)
+  }
+
+  const isAccessoryOwned = (accessory: Accessory): boolean => {
+    if (!monsterAccessories) return false
+    const ownedKey = `owned_${accessory.type}s` as keyof MonsterAccessories
+    const owned = monsterAccessories[ownedKey] as string[]
+    return owned?.includes(accessory.id) || false
+  }
+
+  const isAccessoryEquipped = (accessory: Accessory): boolean => {
+    if (!monsterAccessories) return false
+    const equippedKey = `equipped_${accessory.type}` as keyof MonsterAccessories
+    return monsterAccessories[equippedKey] === accessory.id
+  }
+
+  const handleEquip = async (accessory: Accessory) => {
+    setPurchasing(true)
+    setSelectedAccessory(accessory)
+
     const supabase = createClient()
     const columnName = `equipped_${accessory.type}`
 
@@ -81,21 +125,165 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
       return
     }
 
-    // Refresh coins
-    await loadCoins()
+    await loadMonsterAccessories()
     setPurchasing(false)
     setSelectedAccessory(null)
+    onAccessoryEquipped()
 
-    // Notify parent to refresh monster data
+    setToast({
+      show: true,
+      title: "Équipé !",
+      description: `${accessory.name} a été équipé avec succès.`,
+      variant: "success",
+    })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handleUnequip = async (accessory: Accessory) => {
+    setPurchasing(true)
+    setSelectedAccessory(accessory)
+
+    const supabase = createClient()
+    const columnName = `equipped_${accessory.type}`
+
+    const { error } = await supabase
+      .from("monsters")
+      .update({ [columnName]: null })
+      .eq("id", monsterId)
+
+    if (error) {
+      console.error("[v0] Error unequipping accessory:", error)
+      setToast({
+        show: true,
+        title: "Erreur",
+        description: "Une erreur est survenue lors du retrait de l'accessoire.",
+        variant: "error",
+      })
+      setPurchasing(false)
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    await loadMonsterAccessories()
+    setPurchasing(false)
+    setSelectedAccessory(null)
+    onAccessoryEquipped()
+
+    setToast({
+      show: true,
+      title: "Retiré !",
+      description: `${accessory.name} a été retiré.`,
+      variant: "success",
+    })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handlePurchase = async (accessory: Accessory) => {
+    if (coins < accessory.price) {
+      setToast({
+        show: true,
+        title: "Pas assez de coins",
+        description: `Il vous faut ${accessory.price} coins pour acheter cet accessoire.`,
+        variant: "error",
+      })
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    setPurchasing(true)
+    setSelectedAccessory(accessory)
+
+    // Spend coins
+    const success = await spendCoins(accessory.price)
+
+    if (!success) {
+      setToast({
+        show: true,
+        title: "Erreur",
+        description: "Une erreur est survenue lors du paiement.",
+        variant: "error",
+      })
+      setPurchasing(false)
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    // Add to owned and equip accessory on monster
+    const supabase = createClient()
+    const ownedColumn = `owned_${accessory.type}s`
+    const equippedColumn = `equipped_${accessory.type}`
+
+    // Get current owned accessories
+    const { data: currentData } = await supabase.from("monsters").select(ownedColumn).eq("id", monsterId).single()
+
+    const currentOwned = (currentData?.[ownedColumn as keyof typeof currentData] as string[]) || []
+    const newOwned = [...currentOwned, accessory.id]
+
+    // Update both owned and equipped
+    const { error } = await supabase
+      .from("monsters")
+      .update({
+        [ownedColumn]: newOwned,
+        [equippedColumn]: accessory.id,
+      })
+      .eq("id", monsterId)
+
+    if (error) {
+      console.error("[v0] Error purchasing accessory:", error)
+      setToast({
+        show: true,
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'achat de l'accessoire.",
+        variant: "error",
+      })
+      setPurchasing(false)
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    // Refresh data
+    await loadCoins()
+    await loadMonsterAccessories()
+    setPurchasing(false)
+    setSelectedAccessory(null)
     onAccessoryEquipped()
 
     setToast({
       show: true,
       title: "Achat réussi !",
-      description: `${accessory.name} a été équipé avec succès sur votre monstre.`,
+      description: `${accessory.name} a été acheté et équipé avec succès.`,
       variant: "success",
     })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  const getButtonText = (accessory: Accessory): string => {
+    if (purchasing && selectedAccessory?.id === accessory.id) {
+      return "..."
+    }
+    if (isAccessoryEquipped(accessory)) {
+      return "Retirer"
+    }
+    if (isAccessoryOwned(accessory)) {
+      return "Équiper"
+    }
+    if (coins >= accessory.price) {
+      return "Acheter"
+    }
+    return "Pas assez"
+  }
+
+  const getButtonVariant = (accessory: Accessory): "default" | "secondary" | "outline" => {
+    if (isAccessoryEquipped(accessory)) {
+      return "outline"
+    }
+    if (isAccessoryOwned(accessory)) {
+      return "default"
+    }
+    if (coins >= accessory.price) {
+      return "default"
+    }
+    return "secondary"
   }
 
   const groupedAccessories = ACCESSORIES.reduce(
@@ -141,33 +329,52 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                   {type === "hat" ? "Chapeaux" : type === "glasses" ? "Lunettes" : "Chaussures"}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {accessories.map((accessory) => (
-                    <Card key={accessory.id} className="p-3 sm:p-4 hover:shadow-lg transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1 mr-2">
-                          <h4 className="font-bold text-base sm:text-lg">{accessory.name}</h4>
-                          <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
-                        </div>
-                        <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0">
-                          <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
-                          <span className="font-bold text-xs sm:text-sm text-yellow-800">{accessory.price}</span>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handlePurchase(accessory)}
-                        disabled={purchasing || coins < accessory.price}
-                        className="w-full mt-2 text-sm sm:text-base"
-                        size="sm"
-                        variant={coins >= accessory.price ? "default" : "secondary"}
+                  {accessories.map((accessory) => {
+                    const isOwned = isAccessoryOwned(accessory)
+                    const isEquipped = isAccessoryEquipped(accessory)
+
+                    return (
+                      <Card
+                        key={accessory.id}
+                        className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${isEquipped ? "ring-2 ring-green-500" : ""}`}
                       >
-                        {purchasing && selectedAccessory?.id === accessory.id
-                          ? "Achat..."
-                          : coins >= accessory.price
-                            ? "Acheter"
-                            : "Pas assez"}
-                      </Button>
-                    </Card>
-                  ))}
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 mr-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-base sm:text-lg">{accessory.name}</h4>
+                              {isEquipped && (
+                                <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                                  <Check className="h-3 w-3" />
+                                  Équipé
+                                </span>
+                              )}
+                              {isOwned && !isEquipped && (
+                                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                                  Possédé
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
+                          </div>
+                          {!isOwned && (
+                            <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0">
+                              <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
+                              <span className="font-bold text-xs sm:text-sm text-yellow-800">{accessory.price}</span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => handleAction(accessory)}
+                          disabled={purchasing || (!isOwned && coins < accessory.price)}
+                          className="w-full mt-2 text-sm sm:text-base"
+                          size="sm"
+                          variant={getButtonVariant(accessory)}
+                        >
+                          {getButtonText(accessory)}
+                        </Button>
+                      </Card>
+                    )
+                  })}
                 </div>
               </div>
             ))}
