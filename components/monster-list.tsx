@@ -23,6 +23,8 @@ type Monster = {
   equipped_hat?: string
   equipped_glasses?: string
   equipped_shoes?: string
+  level?: number // Added level field
+  xp?: number // Added xp field
 }
 
 type MonsterListProps = {
@@ -173,11 +175,18 @@ const MonsterCard = memo(({ monster, displayState }: { monster: Monster; display
           </div>
           <div className="text-center space-y-2">
             <h3 className="text-2xl font-bold text-foreground mb-1">{monster.name}</h3>
-            <Badge
-              className={`${stateStyle.bg} ${stateStyle.text} ${stateStyle.border} border-2 text-sm font-semibold px-3 py-1`}
-            >
-              {stateStyle.label}
-            </Badge>
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {monster.level !== undefined && (
+                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white border-2 border-yellow-500 text-sm font-bold px-3 py-1">
+                  ⭐ Niv. {monster.level}
+                </Badge>
+              )}
+              <Badge
+                className={`${stateStyle.bg} ${stateStyle.text} ${stateStyle.border} border-2 text-sm font-semibold px-3 py-1`}
+              >
+                {stateStyle.label}
+              </Badge>
+            </div>
           </div>
         </div>
       </Card>

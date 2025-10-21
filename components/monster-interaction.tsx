@@ -16,6 +16,10 @@ import { ShopModal } from "@/components/shop-modal"
 import { CoinAnimation } from "@/components/coin-animation"
 import { useSound } from "@/hooks/use-sound"
 import { emitMonsterUpdate, emitMonsterDeleted, emitMonsterRenamed } from "@/lib/monster-events"
+import { LevelDisplay } from "@/components/level-display"
+import { XPAnimation } from "@/components/xp-animation"
+import { LevelUpModal } from "@/components/level-up-modal"
+import { XP_PER_ACTION, addXP, calculateLevelFromXP } from "@/lib/xp-system"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +55,9 @@ type Monster = {
   equipped_hat?: string | null
   equipped_glasses?: string | null
   equipped_shoes?: string | null
+  level?: number
+  xp?: number
+  total_xp?: number
 }
 
 export function MonsterInteraction({ monster: initialMonster }: { monster: Monster }) {
@@ -65,6 +72,10 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [shopOpen, setShopOpen] = useState(false)
   const [monster, setMonster] = useState(initialMonster)
   const [coinTrigger, setCoinTrigger] = useState(0)
+  const [xpTrigger, setXpTrigger] = useState(0)
+  const [lastXPGained, setLastXPGained] = useState(0)
+  const [showLevelUp, setShowLevelUp] = useState(false)
+  const [newLevel, setNewLevel] = useState(0)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
@@ -76,12 +87,13 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const levelInfo = calculateLevelFromXP(monster.total_xp || 0)
+
   useEffect(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
 
-    // Only debounce automatic state changes (when not animating)
     if (!isAnimating) {
       saveTimeoutRef.current = setTimeout(async () => {
         const { error } = await supabase
@@ -156,6 +168,26 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
       play("coin", 0.4)
       setCoinTrigger((prev) => prev + 1)
 
+      const xpGained = XP_PER_ACTION[action]
+      const xpResult = addXP(monster.total_xp || 0, xpGained)
+
+      setLastXPGained(xpGained)
+      setXpTrigger((prev) => prev + 1)
+
+      const updatedMonster = {
+        ...monster,
+        level: xpResult.newLevel,
+        xp: xpResult.newCurrentXP,
+        total_xp: xpResult.newTotalXP,
+      }
+      setMonster(updatedMonster)
+
+      if (xpResult.leveledUp) {
+        setNewLevel(xpResult.newLevel)
+        setShowLevelUp(true)
+        play("success", 0.5)
+      }
+
       const actionStateMap = {
         play: "bored",
         feed: "hungry",
@@ -174,18 +206,34 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         newState = "excited"
       }
 
-      // Save immediately to database
       if (newState !== state) {
         setState(newState)
-        await saveStateImmediately(newState)
+        await supabase
+          .from("monsters")
+          .update({
+            current_state: newState,
+            last_state_change: new Date().toISOString(),
+            level: xpResult.newLevel,
+            xp: xpResult.newCurrentXP,
+            total_xp: xpResult.newTotalXP,
+          })
+          .eq("id", monster.id)
+        emitMonsterUpdate(monster.id, newState)
+      } else {
+        await supabase
+          .from("monsters")
+          .update({
+            level: xpResult.newLevel,
+            xp: xpResult.newCurrentXP,
+            total_xp: xpResult.newTotalXP,
+          })
+          .eq("id", monster.id)
       }
 
-      // Keep animation for visual feedback
       setTimeout(() => {
         setIsAnimating(false)
         setCurrentAction(null)
 
-        // If excited from gift, return to happy after animation
         if (action === "gift" && newState === "excited") {
           setTimeout(() => {
             setState("happy")
@@ -194,7 +242,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         }
       }, 1500)
     },
-    [state, play, saveStateImmediately],
+    [state, play, monster, supabase],
   )
 
   const handleAccessoryEquipped = useCallback(async () => {
@@ -271,6 +319,8 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
       <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 shadow-2xl border-4 border-border bg-card/95 backdrop-blur-sm relative z-10">
         <CoinAnimation trigger={coinTrigger} />
+        <XPAnimation trigger={xpTrigger} xpGained={lastXPGained} />
+
         <div className="flex flex-col gap-3 mb-6">
           <div className="flex items-center justify-between">
             <Link href="/dashboard">
@@ -320,6 +370,14 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           <p className="text-muted-foreground text-base sm:text-xl font-medium">
             Prends soin de ton petit monstre adorable !
           </p>
+        </div>
+
+        <div className="mb-6">
+          <LevelDisplay
+            level={levelInfo.level}
+            currentXP={levelInfo.currentXP}
+            xpForNextLevel={levelInfo.xpForNextLevel}
+          />
         </div>
 
         <div className="mb-6 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-border shadow-inner sm:mb-0">
@@ -417,6 +475,8 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <LevelUpModal show={showLevelUp} newLevel={newLevel} onClose={() => setShowLevelUp(false)} />
     </main>
   )
 }
