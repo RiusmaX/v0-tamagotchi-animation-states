@@ -47,7 +47,7 @@ export function GameNav() {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+            <span className="text-3xl font-bold tracking-wider bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
               Tamagotchi
             </span>
           </Link>
