@@ -20,27 +20,36 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-20 relative z-10">
-          <div className="text-center mb-16">
-            <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-6 font-sans text-balance">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 relative z-10">
+          <div className="text-center mb-12 sm:mb-16">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-4 sm:mb-6 font-sans text-balance">
               Adoptez votre Tamagotchi Virtuel
             </h1>
-            <p className="text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto text-balance">
+            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto text-balance px-4">
               Créez, élevez et personnalisez vos petits monstres adorables en pixel art. Chaque monstre est unique et a
               besoin de votre attention !
             </p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Button asChild size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-pink-500 to-purple-500">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+              <Button
+                asChild
+                size="lg"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-pink-500 to-purple-500 w-full sm:w-auto"
+              >
                 <Link href="/auth/sign-up">Commencer gratuitement</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg px-8 py-6 bg-transparent">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-transparent w-full sm:w-auto"
+              >
                 <Link href="/auth/login">Se connecter</Link>
               </Button>
             </div>
           </div>
 
           {/* Features */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-20">
             <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-pink-200 hover:border-pink-300 transition-colors">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-white" />
@@ -83,15 +92,19 @@ export default function LandingPage() {
           </div>
 
           {/* CTA Section */}
-          <div className="mt-20 text-center">
-            <Card className="p-12 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 border-2 border-purple-300">
-              <h2 className="text-4xl font-bold mb-4 text-foreground text-balance">
+          <div className="mt-12 sm:mt-20 text-center px-4">
+            <Card className="p-6 sm:p-8 md:p-12 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 border-2 border-purple-300">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-foreground text-balance">
                 Prêt à adopter votre premier monstre ?
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 text-balance">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 text-balance">
                 Rejoignez des milliers de joueurs et commencez votre aventure dès maintenant
               </p>
-              <Button asChild size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-pink-500 to-purple-500">
+              <Button
+                asChild
+                size="lg"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-pink-500 to-purple-500 w-full sm:w-auto"
+              >
                 <Link href="/auth/sign-up">Créer mon compte gratuitement</Link>
               </Button>
             </Card>

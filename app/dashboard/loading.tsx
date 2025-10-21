@@ -1,40 +1,6 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { MonsterList } from "@/components/monster-list"
-import type { Metadata } from "next"
-import { Suspense } from "react"
 import { MonsterCardSkeleton } from "@/components/skeletons/monster-card-skeleton"
 
-export const metadata: Metadata = {
-  title: "Mes Monstres",
-  description: "Gérez tous vos petits monstres adorables",
-}
-
-async function DashboardContent() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: monsters, error } = await supabase
-    .from("monsters")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("[v0] Error fetching monsters:", error)
-  }
-
-  return <MonsterList monsters={monsters || []} userId={user.id} />
-}
-
-export default function DashboardPage() {
+export default function DashboardLoading() {
   return (
     <main className="min-h-screen p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -61,17 +27,11 @@ export default function DashboardPage() {
           <p className="text-muted-foreground text-xl font-medium">Gérez tous vos petits monstres adorables</p>
         </div>
 
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <MonsterCardSkeleton key={i} />
-              ))}
-            </div>
-          }
-        >
-          <DashboardContent />
-        </Suspense>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <MonsterCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     </main>
   )

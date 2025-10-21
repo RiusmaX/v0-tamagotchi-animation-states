@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { walletEvents } from "@/lib/wallet-events"
 
 export async function getUserCoins(): Promise<number> {
   const supabase = createClient()
@@ -41,19 +42,19 @@ export async function addCoins(amount: number): Promise<boolean> {
 
   if (!profile) {
     await supabase.from("user_profiles").insert({ user_id: user.id, coins: amount })
+    walletEvents.emit(amount)
     return true
   }
 
-  const { error } = await supabase
-    .from("user_profiles")
-    .update({ coins: profile.coins + amount })
-    .eq("user_id", user.id)
+  const newCoins = profile.coins + amount
+  const { error } = await supabase.from("user_profiles").update({ coins: newCoins }).eq("user_id", user.id)
 
   if (error) {
     console.error("[v0] Error adding coins:", error)
     return false
   }
 
+  walletEvents.emit(newCoins)
   return true
 }
 
@@ -71,16 +72,15 @@ export async function spendCoins(amount: number): Promise<boolean> {
     return false
   }
 
-  const { error } = await supabase
-    .from("user_profiles")
-    .update({ coins: profile.coins - amount })
-    .eq("user_id", user.id)
+  const newCoins = profile.coins - amount
+  const { error } = await supabase.from("user_profiles").update({ coins: newCoins }).eq("user_id", user.id)
 
   if (error) {
     console.error("[v0] Error spending coins:", error)
     return false
   }
 
+  walletEvents.emit(newCoins)
   return true
 }
 

@@ -6,7 +6,7 @@ import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react"
+import { ArrowLeft, ShoppingBag, Trash2, MoreVertical, Edit } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
@@ -24,6 +24,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
@@ -54,6 +65,9 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [coinTrigger, setCoinTrigger] = useState(0)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  const [newName, setNewName] = useState(initialMonster.name)
+  const [isRenaming, setIsRenaming] = useState(false)
   const supabase = createClient()
   const router = useRouter()
 
@@ -161,8 +175,35 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     }
   }
 
+  const handleRenameMonster = async () => {
+    if (!newName.trim() || newName === monster.name) {
+      setRenameDialogOpen(false)
+      return
+    }
+
+    setIsRenaming(true)
+
+    try {
+      const { error } = await supabase
+        .from("monsters")
+        .update({ name: newName.trim() })
+        .eq("id", monster.id)
+        .eq("user_id", monster.user_id)
+
+      if (error) throw error
+
+      setMonster({ ...monster, name: newName.trim() })
+      setRenameDialogOpen(false)
+      router.refresh()
+    } catch (error) {
+      console.error("[v0] Error renaming monster:", error)
+    } finally {
+      setIsRenaming(false)
+    }
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+    <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-16 h-16 bg-pink-200 rounded-full opacity-20 float-animation" />
         <div
@@ -179,42 +220,61 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         />
       </div>
 
-      <Card className="w-full max-w-2xl p-8 shadow-2xl border-4 border-border bg-card/95 backdrop-blur-sm relative z-10">
+      <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 shadow-2xl border-4 border-border bg-card/95 backdrop-blur-sm relative z-10">
         <CoinAnimation trigger={coinTrigger} />
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/dashboard">
-            <Button variant="outline" size="lg">
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Retour
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3">
-            <WalletDisplay />
-            <Button onClick={() => setShopOpen(true)} variant="outline" size="lg" className="gap-2">
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" className="sm:size-default bg-transparent">
+                <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Retour</span>
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <WalletDisplay />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="sm:size-default bg-transparent">
+                    <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Renommer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShopOpen(true)}
+              className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg"
+              size="lg"
+            >
               <ShoppingBag className="h-5 w-5" />
               Boutique
-            </Button>
-            <Button
-              onClick={() => setDeleteDialogOpen(true)}
-              variant="outline"
-              size="lg"
-              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-5 w-5" />
-              Supprimer
             </Button>
           </div>
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-3 font-sans">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-2 sm:mb-3 font-sans">
             {monster.name}
           </h1>
-          <p className="text-muted-foreground text-xl font-medium">Prends soin de ton petit monstre adorable !</p>
+          <p className="text-muted-foreground text-base sm:text-xl font-medium">
+            Prends soin de ton petit monstre adorable !
+          </p>
         </div>
 
-        <div className="mb-8 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-8 border-4 border-border shadow-inner">
-          <div className="w-80 h-80 mx-auto">
+        <div className="mb-6 sm:mb-8 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-border shadow-inner">
+          <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 mx-auto">
             <PixelMonster
               state={state}
               actionAnimation={currentAction}
@@ -228,7 +288,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           </div>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <StatusDisplay state={state} />
         </div>
 
@@ -243,7 +303,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           disabled={isAnimating}
         />
 
-        <div className="mt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-muted-foreground">
           <p className="font-medium">✨ Astuce : Chaque action te rapporte 1 coin !</p>
         </div>
       </Card>
@@ -254,6 +314,38 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         monsterId={monster.id}
         onAccessoryEquipped={handleAccessoryEquipped}
       />
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renommer {monster.name}</DialogTitle>
+            <DialogDescription>
+              Choisissez un nouveau nom pour votre monstre. Le nom doit contenir au moins 1 caractère.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nouveau nom</Label>
+              <Input
+                id="name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Nom du monstre"
+                maxLength={50}
+                disabled={isRenaming}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)} disabled={isRenaming}>
+              Annuler
+            </Button>
+            <Button onClick={handleRenameMonster} disabled={isRenaming || !newName.trim()}>
+              {isRenaming ? "Renommage..." : "Renommer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

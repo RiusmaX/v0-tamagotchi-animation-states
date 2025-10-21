@@ -57,27 +57,27 @@ export default function PricingPage() {
         />
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-20 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-6 font-sans text-balance">
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-4 sm:mb-6 font-sans text-balance">
             Achetez des Pièces
           </h1>
-          <p className="text-2xl text-muted-foreground mb-4 text-balance">
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-3 sm:mb-4 text-balance px-4">
             Obtenez des pièces pour acheter des accessoires et personnaliser vos monstres
           </p>
-          <p className="text-lg text-muted-foreground text-balance">
+          <p className="text-base sm:text-lg text-muted-foreground text-balance px-4">
             Vous pouvez aussi gagner des pièces gratuitement en prenant soin de vos monstres !
           </p>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-16">
           {pricingPlans.map((plan) => (
             <Card
               key={plan.coins}
-              className={`relative p-8 bg-white/80 backdrop-blur-sm border-2 ${plan.borderColor} hover:shadow-xl transition-all ${
-                plan.popular ? "scale-105 shadow-lg" : ""
+              className={`relative p-6 sm:p-8 bg-white/80 backdrop-blur-sm border-2 ${plan.borderColor} hover:shadow-xl transition-all ${
+                plan.popular ? "sm:scale-105 shadow-lg" : ""
               }`}
             >
               {plan.badge && (
@@ -88,22 +88,25 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <div
-                  className={`w-20 h-20 mx-auto mb-4 bg-gradient-to-br ${plan.color} rounded-full flex items-center justify-center`}
+                  className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 bg-gradient-to-br ${plan.color} rounded-full flex items-center justify-center`}
                 >
-                  <Coins className="w-10 h-10 text-white" />
+                  <Coins className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
-                <div className="text-5xl font-bold text-foreground mb-2">{plan.coins}</div>
-                <div className="text-muted-foreground text-lg">pièces</div>
+                <div className="text-4xl sm:text-5xl font-bold text-foreground mb-2">{plan.coins}</div>
+                <div className="text-muted-foreground text-base sm:text-lg">pièces</div>
               </div>
 
-              <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-foreground mb-1">{plan.price}€</div>
-                <div className="text-muted-foreground">paiement unique</div>
+              <div className="text-center mb-4 sm:mb-6">
+                <div className="text-3xl sm:text-4xl font-bold text-foreground mb-1">{plan.price}€</div>
+                <div className="text-sm sm:text-base text-muted-foreground">paiement unique</div>
               </div>
 
-              <Button className={`w-full bg-gradient-to-r ${plan.color} text-white text-lg py-6`} size="lg">
+              <Button
+                className={`w-full bg-gradient-to-r ${plan.color} text-white text-base sm:text-lg py-5 sm:py-6`}
+                size="lg"
+              >
                 Acheter maintenant
               </Button>
             </Card>
@@ -111,11 +114,11 @@ export default function PricingPage() {
         </div>
 
         {/* Features */}
-        <Card className="p-8 bg-white/80 backdrop-blur-sm border-2 border-purple-200">
-          <h2 className="text-3xl font-bold text-center mb-8 text-foreground">
+        <Card className="p-6 sm:p-8 bg-white/80 backdrop-blur-sm border-2 border-purple-200">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-foreground">
             Que pouvez-vous faire avec vos pièces ?
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                 <Check className="w-4 h-4 text-white" />

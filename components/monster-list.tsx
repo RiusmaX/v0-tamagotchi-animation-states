@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
 import { WalletDisplay } from "@/components/wallet-display"
+import { MonsterCardSkeleton } from "@/components/skeletons/monster-card-skeleton"
 
 type Monster = {
   id: string
@@ -148,14 +149,14 @@ const stateColors = {
 export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [displayStates, setDisplayStates] = useState<Record<string, string>>({})
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    // Refresh on mount to get latest data from database
     router.refresh()
+    setIsInitialLoading(false)
 
-    // Refresh when page becomes visible again (user returns from detail page)
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         router.refresh()
@@ -186,7 +187,6 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
         const newState = calculateMonsterState(monster.last_state_change, monster.current_state as MonsterState)
         newStates[monster.id] = newState
 
-        // If state changed, prepare update
         if (newState !== monster.current_state) {
           updates.push({ id: monster.id, state: newState })
         }
@@ -194,7 +194,6 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
 
       setDisplayStates(newStates)
 
-      // Save state changes to database
       if (updates.length > 0) {
         for (const update of updates) {
           await supabase
@@ -205,10 +204,9 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
             })
             .eq("id", update.id)
         }
-        // Refresh to get updated data
         router.refresh()
       }
-    }, 10000) // Update every 10 seconds
+    }, 10000)
 
     return () => clearInterval(interval)
   }, [monsters, supabase, router])
@@ -257,7 +255,13 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
         <WalletDisplay />
       </div>
 
-      {monsters.length === 0 ? (
+      {isInitialLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <MonsterCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : monsters.length === 0 ? (
         <Card className="p-12 text-center border-4 border-dashed">
           <div className="space-y-4">
             <Sparkles className="h-16 w-16 mx-auto text-purple-400" />

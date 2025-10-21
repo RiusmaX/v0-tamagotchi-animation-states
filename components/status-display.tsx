@@ -71,9 +71,11 @@ export function StatusDisplay({ state }: StatusDisplayProps) {
   const status = statusMessages[state]
 
   return (
-    <Card className={`${status.bg} border-3 ${status.border} p-6 text-center shadow-lg`}>
-      <div className="text-7xl mb-4 animate-bounce">{status.emoji}</div>
-      <p className={`text-2xl font-bold ${status.color}`}>{status.text}</p>
+    <Card className={`${status.bg} border-3 ${status.border} p-3 sm:p-4 shadow-lg`}>
+      <div className="flex items-center justify-center gap-3">
+        <div className="text-3xl sm:text-4xl animate-bounce">{status.emoji}</div>
+        <p className={`text-base sm:text-lg font-bold ${status.color}`}>{status.text}</p>
+      </div>
     </Card>
   )
 }

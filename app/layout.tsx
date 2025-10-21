@@ -4,7 +4,10 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
-import { Header } from "@/components/header"
+import { GameNav } from "@/components/game-nav"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import { createClient } from "@/lib/supabase/server"
+import { NavigationWrapper } from "@/components/navigation-wrapper" // Import NavigationWrapper component
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -56,6 +59,31 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
+async function LayoutContent({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  return (
+    <>
+      {user ? (
+        <>
+          <GameNav />
+          <MobileBottomNav />
+        </>
+      ) : (
+        <NavigationWrapper />
+      )}
+      <div className={user ? "lg:pb-0 pb-20" : ""}>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+          {children}
+        </Suspense>
+      </div>
+    </>
+  )
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -64,10 +92,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Header />
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-          {children}
-        </Suspense>
+        <LayoutContent>{children}</LayoutContent>
         <Analytics />
       </body>
     </html>
