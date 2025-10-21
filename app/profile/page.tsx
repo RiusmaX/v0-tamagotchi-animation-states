@@ -7,6 +7,7 @@ import { WalletDisplay } from "@/components/wallet-display"
 import { Sparkles, Mail, Calendar } from "lucide-react"
 import { Suspense } from "react"
 import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton"
+import { LogoutButton } from "@/components/logout-button"
 
 export const metadata: Metadata = {
   title: "Mon Profil",
@@ -105,6 +106,16 @@ async function ProfileContent() {
             <div className="flex justify-center">
               <WalletDisplay />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-red-200 shadow-lg">
+          <CardHeader>
+            <CardTitle>Déconnexion</CardTitle>
+            <CardDescription>Quitter votre session</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LogoutButton />
           </CardContent>
         </Card>
       </div>

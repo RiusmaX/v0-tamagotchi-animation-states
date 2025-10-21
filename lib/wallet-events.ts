@@ -16,3 +16,8 @@ class WalletEventEmitter {
 }
 
 export const walletEvents = new WalletEventEmitter()
+
+export function emitWalletUpdate() {
+  // Emit with 0 as a signal to refresh, the actual value will be fetched by the listener
+  walletEvents.emit(0)
+}

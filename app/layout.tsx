@@ -8,6 +8,7 @@ import { GameNav } from "@/components/game-nav"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { createClient } from "@/lib/supabase/server"
 import { NavigationWrapper } from "@/components/navigation-wrapper" // Import NavigationWrapper component
+import { LoginStreakChecker } from "@/components/login-streak-checker"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -71,6 +72,7 @@ async function LayoutContent({ children }: { children: React.ReactNode }) {
         <>
           <GameNav />
           <MobileBottomNav />
+          <LoginStreakChecker />
         </>
       ) : (
         <NavigationWrapper />
