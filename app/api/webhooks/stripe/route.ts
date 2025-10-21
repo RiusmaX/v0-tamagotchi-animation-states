@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import type Stripe from "stripe"
 
 export async function POST(req: NextRequest) {
@@ -35,19 +35,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing metadata" }, { status: 400 })
     }
 
-    // Credit the coins to the user
-    const supabase = await createClient()
-    const { error } = await supabase.rpc("add_coins", {
-      p_user_id: userId,
-      p_amount: coins,
-    })
+    try {
+      const supabase = createAdminClient()
 
-    if (error) {
-      console.error("[v0] Error crediting coins:", error)
+      // Get current coins
+      const { data: profile, error: fetchError } = await supabase
+        .from("user_profiles")
+        .select("coins")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (fetchError) {
+        console.error("[v0] Error fetching user profile:", fetchError)
+        return NextResponse.json({ error: "Failed to fetch user profile" }, { status: 500 })
+      }
+
+      // Calculate new coin amount
+      const currentCoins = profile?.coins || 0
+      const newCoins = currentCoins + coins
+
+      // Update or insert the profile
+      if (profile) {
+        const { error: updateError } = await supabase
+          .from("user_profiles")
+          .update({ coins: newCoins })
+          .eq("user_id", userId)
+
+        if (updateError) {
+          console.error("[v0] Error updating coins:", updateError)
+          return NextResponse.json({ error: "Failed to update coins" }, { status: 500 })
+        }
+      } else {
+        const { error: insertError } = await supabase.from("user_profiles").insert({ user_id: userId, coins: newCoins })
+
+        if (insertError) {
+          console.error("[v0] Error creating profile:", insertError)
+          return NextResponse.json({ error: "Failed to create profile" }, { status: 500 })
+        }
+      }
+
+      console.log("[v0] Successfully credited", coins, "coins to user", userId, "New total:", newCoins)
+    } catch (error) {
+      console.error("[v0] Error processing payment:", error)
       return NextResponse.json({ error: "Failed to credit coins" }, { status: 500 })
     }
-
-    console.log("[v0] Successfully credited", coins, "coins to user", userId)
   }
 
   return NextResponse.json({ received: true })
