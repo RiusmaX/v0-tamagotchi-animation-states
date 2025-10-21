@@ -33,9 +33,9 @@ export function GameNav() {
 
   return (
     <nav className="hidden lg:flex sticky top-0 z-50 w-full border-b bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-xl">
-      <div className="container grid grid-cols-3 h-16 items-center px-6">
-        {/* Left section: Logo */}
-        <div className="flex items-center justify-start">
+      <div className="container relative flex h-16 items-center justify-between px-6">
+        {/* Left section: Logo - fixed width */}
+        <div className="flex items-center w-64">
           <Link href="/dashboard" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
@@ -49,8 +49,8 @@ export function GameNav() {
           </Link>
         </div>
 
-        {/* Center section: Navigation buttons */}
-        <div className="flex items-center justify-center gap-3">
+        {/* Center section: Navigation buttons - absolutely centered */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
           <Link href="/dashboard">
             <Button
               variant={isActive("/dashboard") ? "default" : "ghost"}
@@ -77,8 +77,8 @@ export function GameNav() {
           </Link>
         </div>
 
-        {/* Right section: Wallet and Avatar */}
-        <div className="flex items-center justify-end gap-5">
+        {/* Right section: Wallet and Avatar - fixed width matching left */}
+        <div className="flex items-center justify-end gap-5 w-64">
           <WalletDisplay />
           <Link href="/profile">
             <Avatar className="h-10 w-10 border-2 border-purple-500 cursor-pointer hover:border-purple-400 transition-colors">
