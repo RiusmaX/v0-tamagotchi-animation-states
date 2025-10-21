@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ACCESSORIES, type Accessory, type AccessoryType, getUserCoins, spendCoins } from "@/lib/currency"
 import { Coins, ShoppingBag, Check } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { Toast, ToastContainer } from "@/components/ui/toast"
+import { createClient } from "@/lib/supabase/client"
 
 interface ShopModalProps {
   open: boolean
@@ -23,6 +23,24 @@ interface MonsterAccessories {
   owned_hats: string[]
   owned_glasses: string[]
   owned_shoes: string[]
+}
+
+const getOwnedColumnName = (type: AccessoryType): keyof MonsterAccessories => {
+  const columnMap: Record<AccessoryType, keyof MonsterAccessories> = {
+    hat: "owned_hats",
+    glasses: "owned_glasses",
+    shoe: "owned_shoes",
+  }
+  return columnMap[type]
+}
+
+const getEquippedColumnName = (type: AccessoryType): keyof MonsterAccessories => {
+  const columnMap: Record<AccessoryType, keyof MonsterAccessories> = {
+    hat: "equipped_hat",
+    glasses: "equipped_glasses",
+    shoe: "equipped_shoes",
+  }
+  return columnMap[type]
 }
 
 export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }: ShopModalProps) {
@@ -89,14 +107,14 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
 
   const isAccessoryOwned = (accessory: Accessory): boolean => {
     if (!monsterAccessories) return false
-    const ownedKey = `owned_${accessory.type}s` as keyof MonsterAccessories
+    const ownedKey = getOwnedColumnName(accessory.type)
     const owned = monsterAccessories[ownedKey] as string[]
     return owned?.includes(accessory.id) || false
   }
 
   const isAccessoryEquipped = (accessory: Accessory): boolean => {
     if (!monsterAccessories) return false
-    const equippedKey = `equipped_${accessory.type}` as keyof MonsterAccessories
+    const equippedKey = getEquippedColumnName(accessory.type)
     return monsterAccessories[equippedKey] === accessory.id
   }
 
@@ -105,7 +123,7 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     setSelectedAccessory(accessory)
 
     const supabase = createClient()
-    const columnName = `equipped_${accessory.type}`
+    const columnName = getEquippedColumnName(accessory.type)
 
     const { error } = await supabase
       .from("monsters")
@@ -144,7 +162,7 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     setSelectedAccessory(accessory)
 
     const supabase = createClient()
-    const columnName = `equipped_${accessory.type}`
+    const columnName = getEquippedColumnName(accessory.type)
 
     const { error } = await supabase
       .from("monsters")
@@ -208,15 +226,14 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
       return
     }
 
-    // Add to owned and equip accessory on monster
     const supabase = createClient()
-    const ownedColumn = `owned_${accessory.type}s`
-    const equippedColumn = `equipped_${accessory.type}`
+    const ownedColumn = getOwnedColumnName(accessory.type)
+    const equippedColumn = getEquippedColumnName(accessory.type)
 
     // Get current owned accessories
     const { data: currentData } = await supabase.from("monsters").select(ownedColumn).eq("id", monsterId).single()
 
-    const currentOwned = (currentData?.[ownedColumn as keyof typeof currentData] as string[]) || []
+    const currentOwned = (currentData?.[ownedColumn] as string[]) || []
     const newOwned = [...currentOwned, accessory.id]
 
     // Update both owned and equipped
