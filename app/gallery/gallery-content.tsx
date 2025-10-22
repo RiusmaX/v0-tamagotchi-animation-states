@@ -51,7 +51,7 @@ export function GalleryContent({ monsters, userDisplayNames, currentUserId, like
   const [likedByUser, setLikedByUser] = useState<Set<string>>(likedMonsterIds)
   const [isLiking, setIsLiking] = useState<Record<string, boolean>>({})
   const supabase = createClient()
-  const { playSound } = useSound()
+  const { play } = useSound()
 
   const handleLike = async (monsterId: string) => {
     if (isLiking[monsterId]) return
@@ -94,11 +94,11 @@ export function GalleryContent({ monsters, userDisplayNames, currentUserId, like
 
         setLikes((prev) => ({ ...prev, [monsterId]: prev[monsterId] + 1 }))
         setLikedByUser((prev) => new Set(prev).add(monsterId))
-        playSound("coin")
+        play("coin")
       }
     } catch (error) {
       console.error("[v0] Error toggling like:", error)
-      playSound("error")
+      play("error")
     } finally {
       setIsLiking((prev) => ({ ...prev, [monsterId]: false }))
     }
