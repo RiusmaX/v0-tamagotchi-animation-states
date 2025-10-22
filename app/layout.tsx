@@ -8,6 +8,7 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { createClient } from "@/lib/supabase/server"
 import { NavigationWrapper } from "@/components/navigation-wrapper" // Import NavigationWrapper component
 import { LoginStreakChecker } from "@/components/login-streak-checker"
+import { PWAInstaller } from "@/components/pwa-installer"
 import "./globals.css"
 import { Jersey_25 } from "next/font/google"
 
@@ -18,6 +19,7 @@ const jersey = Jersey_25({
 })
 
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
   title: {
     default: "Tamagotchi Virtuel - Élevez vos petits monstres adorables",
     template: "%s | Tamagotchi Virtuel",
@@ -63,6 +65,11 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tamagotchi",
+  },
   generator: "v0.app",
 }
 
@@ -88,6 +95,7 @@ async function LayoutContent({ children }: { children: React.ReactNode }) {
           {children}
         </Suspense>
       </div>
+      <PWAInstaller />
     </>
   )
 }
@@ -98,7 +106,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
+      <head>
+        <meta name="theme-color" content="#8b5cf6" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Tamagotchi" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.jpg" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.jpg" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.jpg" />
+      </head>
       <body className={`font-sans ${jersey.variable} ${GeistMono.variable}`}>
         <LayoutContent>{children}</LayoutContent>
         <Analytics />
