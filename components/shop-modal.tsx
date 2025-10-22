@@ -4,12 +4,22 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ACCESSORIES, type Accessory, type AccessoryType, getUserCoins, spendCoins } from "@/lib/currency"
-import { Coins, ShoppingBag, Check } from "lucide-react"
+import {
+  ACCESSORIES,
+  type Accessory,
+  type AccessoryType,
+  getUserCoins,
+  spendCoins,
+  getRarityBorderColor,
+  getRarityBackground,
+} from "@/lib/currency"
+import { Coins, Check } from "lucide-react"
 import { Toast, ToastContainer } from "@/components/ui/toast"
 import { createClient } from "@/lib/supabase/client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BackgroundShop } from "@/components/background-shop"
+import { RarityBadge } from "@/components/rarity-badge"
+import { AccessoryPreview } from "@/components/accessory-preview"
 
 interface ShopModalProps {
   open: boolean
@@ -318,6 +328,16 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     {} as Record<AccessoryType, Accessory[]>,
   )
 
+  // Sort each group by rarity (common -> legendary) and then by price
+  const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 }
+  Object.keys(groupedAccessories).forEach((type) => {
+    groupedAccessories[type as AccessoryType].sort((a, b) => {
+      const rarityDiff = rarityOrder[a.rarity] - rarityOrder[b.rarity]
+      if (rarityDiff !== 0) return rarityDiff
+      return a.price - b.price
+    })
+  })
+
   return (
     <>
       {toast?.show && (
@@ -351,13 +371,15 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                 <span className="font-bold text-lg sm:text-xl text-yellow-800">{coins}</span>
               </div>
 
-              <div className="space-y-4 sm:space-y-6">
+              <Tabs defaultValue="hat" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="hat">Chapeaux</TabsTrigger>
+                  <TabsTrigger value="glasses">Lunettes</TabsTrigger>
+                  <TabsTrigger value="shoes">Chaussures</TabsTrigger>
+                </TabsList>
+
                 {Object.entries(groupedAccessories).map(([type, accessories]) => (
-                  <div key={type}>
-                    <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 capitalize flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
-                      {type === "hat" ? "Chapeaux" : type === "glasses" ? "Lunettes" : "Chaussures"}
-                    </h3>
+                  <TabsContent key={type} value={type} className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {accessories.map((accessory) => {
                         const isOwned = isAccessoryOwned(accessory)
@@ -366,51 +388,63 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                         return (
                           <Card
                             key={accessory.id}
-                            className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${isEquipped ? "ring-2 ring-green-500" : ""}`}
+                            className={`p-3 sm:p-4 hover:shadow-lg transition-all border-2 ${getRarityBorderColor(accessory.rarity)} ${getRarityBackground(accessory.rarity)} ${
+                              isEquipped ? "ring-2 ring-green-500 ring-offset-2" : ""
+                            } ${accessory.rarity === "legendary" ? "animate-pulse" : ""}`}
                           >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1 mr-2">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-bold text-base sm:text-lg">{accessory.name}</h4>
-                                  {isEquipped && (
-                                    <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                                      <Check className="h-3 w-3" />
-                                      Équipé
-                                    </span>
-                                  )}
-                                  {isOwned && !isEquipped && (
-                                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                                      Possédé
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
+                            <div className="space-y-2">
+                              <div className="mb-2">
+                                <AccessoryPreview accessoryId={accessory.id} rarity={accessory.rarity} />
                               </div>
-                              {!isOwned && (
-                                <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0">
-                                  <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
-                                  <span className="font-bold text-xs sm:text-sm text-yellow-800">
-                                    {accessory.price}
-                                  </span>
+
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-bold text-base sm:text-lg mb-1">{accessory.name}</h4>
+                                  <RarityBadge rarity={accessory.rarity} size="sm" />
                                 </div>
-                              )}
+                                {!isOwned && (
+                                  <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                                    <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
+                                    <span className="font-bold text-xs sm:text-sm text-yellow-800">
+                                      {accessory.price}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
+
+                              <div className="flex gap-2">
+                                {isEquipped && (
+                                  <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">
+                                    <Check className="h-3 w-3" />
+                                    Équipé
+                                  </span>
+                                )}
+                                {isOwned && !isEquipped && (
+                                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
+                                    Possédé
+                                  </span>
+                                )}
+                              </div>
+
+                              <Button
+                                onClick={() => handleAction(accessory)}
+                                disabled={purchasing || (!isOwned && coins < accessory.price)}
+                                className="w-full text-sm sm:text-base"
+                                size="sm"
+                                variant={getButtonVariant(accessory)}
+                              >
+                                {getButtonText(accessory)}
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => handleAction(accessory)}
-                              disabled={purchasing || (!isOwned && coins < accessory.price)}
-                              className="w-full mt-2 text-sm sm:text-base"
-                              size="sm"
-                              variant={getButtonVariant(accessory)}
-                            >
-                              {getButtonText(accessory)}
-                            </Button>
                           </Card>
                         )
                       })}
                     </div>
-                  </div>
+                  </TabsContent>
                 ))}
-              </div>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="backgrounds">

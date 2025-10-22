@@ -85,6 +85,7 @@ export async function spendCoins(amount: number): Promise<boolean> {
 }
 
 export type AccessoryType = "hat" | "glasses" | "shoes"
+export type AccessoryRarity = "common" | "rare" | "epic" | "legendary"
 
 export interface Accessory {
   id: string
@@ -92,40 +93,264 @@ export interface Accessory {
   type: AccessoryType
   price: number
   description: string
+  rarity: AccessoryRarity
+  emoji: string // Added emoji field for visual display
 }
 
 export const ACCESSORIES: Accessory[] = [
+  // Hats - Common
+  {
+    id: "hat_cap",
+    name: "Casquette",
+    type: "hat",
+    price: 10,
+    description: "Une casquette décontractée",
+    rarity: "common",
+    emoji: "🧢",
+  },
+  {
+    id: "hat_beanie",
+    name: "Bonnet",
+    type: "hat",
+    price: 12,
+    description: "Un bonnet chaud et confortable",
+    rarity: "common",
+    emoji: "🎩",
+  },
+  // Hats - Rare
   {
     id: "hat_party",
     name: "Chapeau de fête",
     type: "hat",
-    price: 15,
+    price: 25,
     description: "Un chapeau coloré pour faire la fête",
+    rarity: "rare",
+    emoji: "🎉",
   },
-  { id: "hat_crown", name: "Couronne", type: "hat", price: 25, description: "Une couronne royale dorée" },
-  { id: "hat_cap", name: "Casquette", type: "hat", price: 10, description: "Une casquette décontractée" },
   {
-    id: "glasses_cool",
-    name: "Lunettes de soleil",
-    type: "glasses",
-    price: 12,
-    description: "Des lunettes de soleil stylées",
+    id: "hat_wizard",
+    name: "Chapeau de magicien",
+    type: "hat",
+    price: 30,
+    description: "Un chapeau pointu mystique",
+    rarity: "rare",
+    emoji: "🧙",
   },
+  // Hats - Epic
+  {
+    id: "hat_crown",
+    name: "Couronne",
+    type: "hat",
+    price: 50,
+    description: "Une couronne royale dorée",
+    rarity: "epic",
+    emoji: "👑",
+  },
+  {
+    id: "hat_halo",
+    name: "Auréole",
+    type: "hat",
+    price: 55,
+    description: "Une auréole divine brillante",
+    rarity: "epic",
+    emoji: "😇",
+  },
+  // Hats - Legendary
+  {
+    id: "hat_dragon",
+    name: "Casque de dragon",
+    type: "hat",
+    price: 100,
+    description: "Un casque légendaire en forme de dragon",
+    rarity: "legendary",
+    emoji: "🐉",
+  },
+
+  // Glasses - Common
   {
     id: "glasses_nerd",
     name: "Lunettes rondes",
     type: "glasses",
     price: 8,
     description: "Des lunettes rondes mignonnes",
+    rarity: "common",
+    emoji: "🤓",
   },
+  {
+    id: "glasses_reading",
+    name: "Lunettes de lecture",
+    type: "glasses",
+    price: 10,
+    description: "Des lunettes pour lire confortablement",
+    rarity: "common",
+    emoji: "👓",
+  },
+  // Glasses - Rare
+  {
+    id: "glasses_cool",
+    name: "Lunettes de soleil",
+    type: "glasses",
+    price: 22,
+    description: "Des lunettes de soleil stylées",
+    rarity: "rare",
+    emoji: "😎",
+  },
+  {
+    id: "glasses_heart",
+    name: "Lunettes coeur",
+    type: "glasses",
+    price: 28,
+    description: "Des lunettes en forme de coeur",
+    rarity: "rare",
+    emoji: "😍",
+  },
+  // Glasses - Epic
   {
     id: "glasses_star",
     name: "Lunettes étoiles",
     type: "glasses",
-    price: 18,
-    description: "Des lunettes en forme d'étoile",
+    price: 45,
+    description: "Des lunettes en forme d'étoile scintillantes",
+    rarity: "epic",
+    emoji: "🌟",
   },
-  { id: "shoes_sneakers", name: "Baskets", type: "shoes", price: 20, description: "Des baskets confortables" },
-  { id: "shoes_boots", name: "Bottes", type: "shoes", price: 22, description: "Des bottes robustes" },
-  { id: "shoes_slippers", name: "Pantoufles", type: "shoes", price: 10, description: "Des pantoufles douillettes" },
+  {
+    id: "glasses_cyber",
+    name: "Lunettes cyber",
+    type: "glasses",
+    price: 50,
+    description: "Des lunettes futuristes high-tech",
+    rarity: "epic",
+    emoji: "🤖",
+  },
+  // Glasses - Legendary
+  {
+    id: "glasses_rainbow",
+    name: "Lunettes arc-en-ciel",
+    type: "glasses",
+    price: 90,
+    description: "Des lunettes magiques aux couleurs de l'arc-en-ciel",
+    rarity: "legendary",
+    emoji: "🌈",
+  },
+
+  // Shoes - Common
+  {
+    id: "shoes_slippers",
+    name: "Pantoufles",
+    type: "shoes",
+    price: 10,
+    description: "Des pantoufles douillettes",
+    rarity: "common",
+    emoji: "🥿",
+  },
+  {
+    id: "shoes_sandals",
+    name: "Sandales",
+    type: "shoes",
+    price: 12,
+    description: "Des sandales légères pour l'été",
+    rarity: "common",
+    emoji: "👡",
+  },
+  // Shoes - Rare
+  {
+    id: "shoes_sneakers",
+    name: "Baskets",
+    type: "shoes",
+    price: 25,
+    description: "Des baskets confortables et stylées",
+    rarity: "rare",
+    emoji: "👟",
+  },
+  {
+    id: "shoes_boots",
+    name: "Bottes",
+    type: "shoes",
+    price: 28,
+    description: "Des bottes robustes d'aventurier",
+    rarity: "rare",
+    emoji: "🥾",
+  },
+  // Shoes - Epic
+  {
+    id: "shoes_rocket",
+    name: "Bottes fusée",
+    type: "shoes",
+    price: 48,
+    description: "Des bottes avec propulseurs intégrés",
+    rarity: "epic",
+    emoji: "🚀",
+  },
+  {
+    id: "shoes_ice",
+    name: "Patins à glace",
+    type: "shoes",
+    price: 52,
+    description: "Des patins magiques qui glissent partout",
+    rarity: "epic",
+    emoji: "⛸️",
+  },
+  // Shoes - Legendary
+  {
+    id: "shoes_wings",
+    name: "Bottes ailées",
+    type: "shoes",
+    price: 95,
+    description: "Des bottes légendaires avec des ailes",
+    rarity: "legendary",
+    emoji: "🦋",
+  },
 ]
+
+export function getRarityColor(rarity: AccessoryRarity): string {
+  switch (rarity) {
+    case "common":
+      return "text-gray-600"
+    case "rare":
+      return "text-blue-600"
+    case "epic":
+      return "text-purple-600"
+    case "legendary":
+      return "text-amber-600"
+  }
+}
+
+export function getRarityBorderColor(rarity: AccessoryRarity): string {
+  switch (rarity) {
+    case "common":
+      return "border-gray-400"
+    case "rare":
+      return "border-blue-400"
+    case "epic":
+      return "border-purple-400"
+    case "legendary":
+      return "border-amber-400"
+  }
+}
+
+export function getRarityBackground(rarity: AccessoryRarity): string {
+  switch (rarity) {
+    case "common":
+      return "bg-gray-50"
+    case "rare":
+      return "bg-blue-50"
+    case "epic":
+      return "bg-purple-50"
+    case "legendary":
+      return "bg-gradient-to-br from-amber-50 to-yellow-50"
+  }
+}
+
+export function getRarityLabel(rarity: AccessoryRarity): string {
+  switch (rarity) {
+    case "common":
+      return "Commun"
+    case "rare":
+      return "Rare"
+    case "epic":
+      return "Épique"
+    case "legendary":
+      return "Légendaire"
+  }
+}

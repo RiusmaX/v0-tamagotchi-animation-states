@@ -519,10 +519,39 @@ function drawPurchasedAccessories(
       ctx.fillRect(105, bodyY - 21, pixelSize, pixelSize * 2)
       ctx.fillStyle = "#FFE66D"
       ctx.fillRect(78, bodyY - 27, pixelSize, pixelSize)
-    } else if (accessories.hat.includes("cap")) {
-      // Cap
+    } else if (accessories.hat.includes("cap") || accessories.hat.includes("beanie")) {
+      // Cap or Beanie
       ctx.fillRect(69, bodyY - 12, pixelSize * 5, pixelSize * 2)
       ctx.fillRect(63, bodyY - 9, pixelSize * 3, pixelSize)
+    } else if (accessories.hat.includes("wizard")) {
+      // Wizard hat
+      ctx.fillRect(72, bodyY - 18, pixelSize * 4, pixelSize)
+      ctx.fillRect(75, bodyY - 24, pixelSize * 3, pixelSize * 3)
+      ctx.fillRect(78, bodyY - 30, pixelSize * 2, pixelSize * 3)
+      ctx.fillStyle = "#FFE66D"
+      for (let i = 0; i < 3; i++) {
+        ctx.fillRect(75 + i * 6, bodyY - 21 + i * 3, pixelSize / 2, pixelSize / 2)
+      }
+    } else if (accessories.hat.includes("halo")) {
+      // Halo
+      ctx.fillStyle = "#FFE66D"
+      ctx.fillRect(66, bodyY - 24, pixelSize * 6, pixelSize)
+      ctx.fillRect(66, bodyY - 27, pixelSize, pixelSize)
+      ctx.fillRect(108, bodyY - 27, pixelSize, pixelSize)
+      const glow = Math.abs(Math.sin(frame * 0.1))
+      ctx.globalAlpha = 0.3 + glow * 0.3
+      ctx.fillRect(63, bodyY - 27, pixelSize * 7, pixelSize * 2)
+      ctx.globalAlpha = 1
+    } else if (accessories.hat.includes("dragon")) {
+      // Dragon hat
+      ctx.fillStyle = "#DC2626"
+      ctx.fillRect(66, bodyY - 15, pixelSize * 6, pixelSize * 3)
+      ctx.fillRect(63, bodyY - 12, pixelSize, pixelSize * 2)
+      ctx.fillRect(111, bodyY - 12, pixelSize, pixelSize * 2)
+      ctx.fillRect(60, bodyY - 18, pixelSize, pixelSize * 2)
+      ctx.fillRect(114, bodyY - 18, pixelSize, pixelSize * 2)
+      ctx.fillStyle = "#FFE66D"
+      ctx.fillRect(75, bodyY - 12, pixelSize * 2, pixelSize)
     }
   }
 
@@ -535,8 +564,8 @@ function drawPurchasedAccessories(
       ctx.fillRect(60, bodyY + 21, pixelSize * 3, pixelSize * 2)
       ctx.fillRect(90, bodyY + 21, pixelSize * 3, pixelSize * 2)
       ctx.fillRect(69, bodyY + 24, pixelSize * 3, pixelSize)
-    } else if (accessories.glasses.includes("nerd")) {
-      // Round glasses
+    } else if (accessories.glasses.includes("nerd") || accessories.glasses.includes("reading")) {
+      // Round glasses or Reading glasses
       ctx.strokeStyle = getAccessoryColor(accessories.glasses)
       ctx.lineWidth = 2
       ctx.beginPath()
@@ -554,6 +583,35 @@ function drawPurchasedAccessories(
       ctx.fillRect(93, bodyY + 21, pixelSize * 2, pixelSize)
       ctx.fillRect(96, bodyY + 18, pixelSize, pixelSize)
       ctx.fillRect(96, bodyY + 27, pixelSize, pixelSize)
+    } else if (accessories.glasses.includes("heart")) {
+      // Heart glasses
+      ctx.fillStyle = "#FF6B9D"
+      ctx.fillRect(60, bodyY + 24, pixelSize, pixelSize)
+      ctx.fillRect(63, bodyY + 21, pixelSize, pixelSize)
+      ctx.fillRect(66, bodyY + 24, pixelSize, pixelSize)
+      ctx.fillRect(63, bodyY + 27, pixelSize, pixelSize)
+      ctx.fillRect(90, bodyY + 24, pixelSize, pixelSize)
+      ctx.fillRect(93, bodyY + 21, pixelSize, pixelSize)
+      ctx.fillRect(96, bodyY + 24, pixelSize, pixelSize)
+      ctx.fillRect(93, bodyY + 27, pixelSize, pixelSize)
+    } else if (accessories.glasses.includes("cyber")) {
+      // Cyber glasses
+      ctx.fillStyle = "#00FFFF"
+      ctx.fillRect(60, bodyY + 21, pixelSize * 3, pixelSize * 2)
+      ctx.fillRect(90, bodyY + 21, pixelSize * 3, pixelSize * 2)
+      ctx.fillRect(69, bodyY + 24, pixelSize * 3, pixelSize)
+      ctx.fillStyle = "#FF00FF"
+      ctx.fillRect(63, bodyY + 21, pixelSize / 2, pixelSize / 2)
+      ctx.fillRect(93, bodyY + 21, pixelSize / 2, pixelSize / 2)
+    } else if (accessories.glasses.includes("rainbow")) {
+      // Rainbow glasses
+      const colors = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#8B00FF"]
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = colors[i]
+        ctx.fillRect(60 + i, bodyY + 21, pixelSize / 2, pixelSize * 2)
+        ctx.fillRect(90 + i, bodyY + 21, pixelSize / 2, pixelSize * 2)
+      }
+      ctx.fillRect(69, bodyY + 24, pixelSize * 3, 2)
     }
   }
 
@@ -572,13 +630,46 @@ function drawPurchasedAccessories(
       // Boots
       ctx.fillRect(54, bodyY + 57, pixelSize * 4, pixelSize * 5)
       ctx.fillRect(102, bodyY + 57, pixelSize * 4, pixelSize * 5)
-    } else if (accessories.shoes.includes("slippers")) {
-      // Slippers
+    } else if (accessories.shoes.includes("slippers") || accessories.shoes.includes("sandals")) {
+      // Slippers or Sandals
       ctx.fillRect(54, bodyY + 60, pixelSize * 4, pixelSize)
       ctx.fillRect(102, bodyY + 60, pixelSize * 4, pixelSize)
       ctx.fillStyle = "#FFB5E8"
       ctx.fillRect(57, bodyY + 57, pixelSize, pixelSize)
       ctx.fillRect(105, bodyY + 57, pixelSize, pixelSize)
+    } else if (accessories.shoes.includes("rocket")) {
+      // Rocket shoes
+      ctx.fillStyle = "#DC2626"
+      ctx.fillRect(54, bodyY + 57, pixelSize * 4, pixelSize * 5)
+      ctx.fillRect(102, bodyY + 57, pixelSize * 4, pixelSize * 5)
+      ctx.fillStyle = "#FFE66D"
+      const flameOffset = Math.abs(Math.sin(frame * 0.2)) * 3
+      ctx.fillRect(57, bodyY + 63 + flameOffset, pixelSize, pixelSize * 2)
+      ctx.fillRect(105, bodyY + 63 + flameOffset, pixelSize, pixelSize * 2)
+      ctx.fillStyle = "#FF6B35"
+      ctx.fillRect(60, bodyY + 66 + flameOffset, pixelSize / 2, pixelSize)
+      ctx.fillRect(108, bodyY + 66 + flameOffset, pixelSize / 2, pixelSize)
+    } else if (accessories.shoes.includes("ice")) {
+      // Ice shoes
+      ctx.fillStyle = "#E0F2FE"
+      ctx.fillRect(54, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      ctx.fillRect(102, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      ctx.fillRect(51, bodyY + 63, pixelSize * 2, pixelSize / 2)
+      ctx.fillRect(111, bodyY + 63, pixelSize * 2, pixelSize / 2)
+      ctx.fillStyle = "#7DD3FC"
+      ctx.fillRect(57, bodyY + 60, pixelSize, pixelSize)
+      ctx.fillRect(105, bodyY + 60, pixelSize, pixelSize)
+    } else if (accessories.shoes.includes("wings")) {
+      // Wings shoes
+      ctx.fillStyle = "#FFB5E8"
+      ctx.fillRect(54, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      ctx.fillRect(102, bodyY + 60, pixelSize * 4, pixelSize * 2)
+      const wingFlap = Math.sin(frame * 0.15) * 3
+      ctx.fillStyle = "#FF6B9D"
+      ctx.fillRect(48, bodyY + 57 + wingFlap, pixelSize * 2, pixelSize)
+      ctx.fillRect(45, bodyY + 60 + wingFlap, pixelSize * 3, pixelSize)
+      ctx.fillRect(108, bodyY + 57 + wingFlap, pixelSize * 2, pixelSize)
+      ctx.fillRect(111, bodyY + 60 + wingFlap, pixelSize * 3, pixelSize)
     }
   }
 }
@@ -587,12 +678,24 @@ function getAccessoryColor(accessoryId: string): string {
   if (accessoryId.includes("party")) return "#FF6B9D"
   if (accessoryId.includes("crown")) return "#FFD700"
   if (accessoryId.includes("cap")) return "#3B82F6"
+  if (accessoryId.includes("beanie")) return "#8B4513"
+  if (accessoryId.includes("wizard")) return "#8B5CF6"
+  if (accessoryId.includes("halo")) return "#FFE66D"
+  if (accessoryId.includes("dragon")) return "#DC2626"
   if (accessoryId.includes("cool")) return "#2C2C2C"
   if (accessoryId.includes("nerd")) return "#8B4513"
+  if (accessoryId.includes("reading")) return "#6B7280"
   if (accessoryId.includes("star")) return "#FFE66D"
+  if (accessoryId.includes("heart")) return "#FF6B9D"
+  if (accessoryId.includes("cyber")) return "#00FFFF"
+  if (accessoryId.includes("rainbow")) return "#FF0000"
   if (accessoryId.includes("sneakers")) return "#EF4444"
   if (accessoryId.includes("boots")) return "#8B4513"
   if (accessoryId.includes("slippers")) return "#FFB5E8"
+  if (accessoryId.includes("sandals")) return "#F59E0B"
+  if (accessoryId.includes("rocket")) return "#DC2626"
+  if (accessoryId.includes("ice")) return "#E0F2FE"
+  if (accessoryId.includes("wings")) return "#FFB5E8"
   return "#2C2C2C"
 }
 

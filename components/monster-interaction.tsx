@@ -189,6 +189,11 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         setNewLevel(xpResult.newLevel)
         setShowLevelUp(true)
         play("success", 0.5)
+
+        // Award 5 coins for leveling up
+        await addCoins(5)
+        play("coin", 0.4)
+        setCoinTrigger((prev) => prev + 1)
       }
 
       if (action === "feed") {
