@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server"
 import { NavigationWrapper } from "@/components/navigation-wrapper" // Import NavigationWrapper component
 import { LoginStreakChecker } from "@/components/login-streak-checker"
 import { PWAInstaller } from "@/components/pwa-installer"
+import { NotificationPrompt } from "@/components/notification-prompt"
 import "./globals.css"
 import { Jersey_25 } from "next/font/google"
 
@@ -86,6 +87,7 @@ async function LayoutContent({ children }: { children: React.ReactNode }) {
           <GameNav />
           <MobileBottomNav />
           <LoginStreakChecker />
+          <NotificationPrompt />
         </>
       ) : (
         <NavigationWrapper />

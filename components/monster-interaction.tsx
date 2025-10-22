@@ -92,6 +92,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const { play } = useSound()
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const prevStateRef = useRef<MonsterState>(initialState)
 
   const levelInfo = calculateLevelFromXP(monster.total_xp || 0)
 
@@ -114,6 +115,25 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           console.error("[v0] Error saving monster state:", error)
         } else {
           emitMonsterUpdate(monster.id, state)
+
+          if (prevStateRef.current !== state && ["hungry", "sleepy", "sad", "sick", "dirty", "bored"].includes(state)) {
+            try {
+              await fetch("/api/notifications/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId: monster.user_id,
+                  monsterId: monster.id,
+                  monsterName: monster.name,
+                  state: state,
+                }),
+              })
+            } catch (error) {
+              console.error("[v0] Error sending notification:", error)
+            }
+          }
+
+          prevStateRef.current = state
         }
       }, 1000)
     }
@@ -123,7 +143,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [state, monster.id, supabase, isAnimating])
+  }, [state, monster.id, monster.user_id, monster.name, supabase, isAnimating])
 
   useEffect(() => {
     const scheduleNextStateChange = () => {
