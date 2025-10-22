@@ -8,6 +8,8 @@ import { ACCESSORIES, type Accessory, type AccessoryType, getUserCoins, spendCoi
 import { Coins, ShoppingBag, Check } from "lucide-react"
 import { Toast, ToastContainer } from "@/components/ui/toast"
 import { createClient } from "@/lib/supabase/client"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BackgroundShop } from "@/components/background-shop"
 
 interface ShopModalProps {
   open: boolean
@@ -23,6 +25,8 @@ interface MonsterAccessories {
   owned_hats: string[]
   owned_glasses: string[]
   owned_shoes: string[]
+  current_background: string
+  owned_backgrounds: string[]
 }
 
 const getOwnedColumnName = (type: AccessoryType): keyof MonsterAccessories => {
@@ -71,7 +75,9 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     const supabase = createClient()
     const { data, error } = await supabase
       .from("monsters")
-      .select("equipped_hat, equipped_glasses, equipped_shoes, owned_hats, owned_glasses, owned_shoes")
+      .select(
+        "equipped_hat, equipped_glasses, equipped_shoes, owned_hats, owned_glasses, owned_shoes, current_background, owned_backgrounds",
+      )
       .eq("id", monsterId)
       .single()
 
@@ -329,73 +335,96 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
         <DialogContent className="max-w-full sm:max-w-[90vw] md:max-w-5xl max-h-[95vh] sm:max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-transparent bg-clip-text">
-              Boutique d&apos;accessoires
+              Boutique
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6 bg-gradient-to-r from-yellow-100 to-amber-100 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-yellow-400 shadow-md w-fit mx-auto">
-            <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
-            <span className="font-bold text-lg sm:text-xl text-yellow-800">{coins}</span>
-          </div>
+          <Tabs defaultValue="accessories" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="accessories">Accessoires</TabsTrigger>
+              <TabsTrigger value="backgrounds">Arrière-plans</TabsTrigger>
+            </TabsList>
 
-          <div className="space-y-4 sm:space-y-6">
-            {Object.entries(groupedAccessories).map(([type, accessories]) => (
-              <div key={type}>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 capitalize flex items-center gap-2">
-                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {type === "hat" ? "Chapeaux" : type === "glasses" ? "Lunettes" : "Chaussures"}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {accessories.map((accessory) => {
-                    const isOwned = isAccessoryOwned(accessory)
-                    const isEquipped = isAccessoryEquipped(accessory)
-
-                    return (
-                      <Card
-                        key={accessory.id}
-                        className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${isEquipped ? "ring-2 ring-green-500" : ""}`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1 mr-2">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-base sm:text-lg">{accessory.name}</h4>
-                              {isEquipped && (
-                                <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                                  <Check className="h-3 w-3" />
-                                  Équipé
-                                </span>
-                              )}
-                              {isOwned && !isEquipped && (
-                                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                                  Possédé
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
-                          </div>
-                          {!isOwned && (
-                            <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0">
-                              <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
-                              <span className="font-bold text-xs sm:text-sm text-yellow-800">{accessory.price}</span>
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          onClick={() => handleAction(accessory)}
-                          disabled={purchasing || (!isOwned && coins < accessory.price)}
-                          className="w-full mt-2 text-sm sm:text-base"
-                          size="sm"
-                          variant={getButtonVariant(accessory)}
-                        >
-                          {getButtonText(accessory)}
-                        </Button>
-                      </Card>
-                    )
-                  })}
-                </div>
+            <TabsContent value="accessories" className="space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6 bg-gradient-to-r from-yellow-100 to-amber-100 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-yellow-400 shadow-md w-fit mx-auto">
+                <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
+                <span className="font-bold text-lg sm:text-xl text-yellow-800">{coins}</span>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-4 sm:space-y-6">
+                {Object.entries(groupedAccessories).map(([type, accessories]) => (
+                  <div key={type}>
+                    <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 capitalize flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+                      {type === "hat" ? "Chapeaux" : type === "glasses" ? "Lunettes" : "Chaussures"}
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      {accessories.map((accessory) => {
+                        const isOwned = isAccessoryOwned(accessory)
+                        const isEquipped = isAccessoryEquipped(accessory)
+
+                        return (
+                          <Card
+                            key={accessory.id}
+                            className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${isEquipped ? "ring-2 ring-green-500" : ""}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1 mr-2">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-base sm:text-lg">{accessory.name}</h4>
+                                  {isEquipped && (
+                                    <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                                      <Check className="h-3 w-3" />
+                                      Équipé
+                                    </span>
+                                  )}
+                                  {isOwned && !isEquipped && (
+                                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                                      Possédé
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
+                              </div>
+                              {!isOwned && (
+                                <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full flex-shrink-0">
+                                  <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
+                                  <span className="font-bold text-xs sm:text-sm text-yellow-800">
+                                    {accessory.price}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => handleAction(accessory)}
+                              disabled={purchasing || (!isOwned && coins < accessory.price)}
+                              className="w-full mt-2 text-sm sm:text-base"
+                              size="sm"
+                              variant={getButtonVariant(accessory)}
+                            >
+                              {getButtonText(accessory)}
+                            </Button>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="backgrounds">
+              <BackgroundShop
+                monsterId={monsterId}
+                currentBackground={monsterAccessories?.current_background || "default"}
+                ownedBackgrounds={monsterAccessories?.owned_backgrounds || ["default"]}
+                onBackgroundChanged={async () => {
+                  await loadMonsterAccessories()
+                  onAccessoryEquipped()
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>

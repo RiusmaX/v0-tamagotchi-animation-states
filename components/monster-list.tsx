@@ -14,6 +14,7 @@ import { monsterEvents } from "@/lib/monster-events"
 import { calculateMonsterPrice } from "@/lib/monster-pricing"
 import { getUserCoins, spendCoins } from "@/lib/currency"
 import { useSound } from "@/hooks/use-sound"
+import { getBackgroundStyle } from "@/lib/backgrounds"
 
 type Monster = {
   id: string
@@ -25,8 +26,9 @@ type Monster = {
   equipped_hat?: string
   equipped_glasses?: string
   equipped_shoes?: string
-  level?: number // Added level field
-  xp?: number // Added xp field
+  level?: number
+  xp?: number
+  current_background?: string // Added background field
 }
 
 type MonsterListProps = {
@@ -152,6 +154,7 @@ const stateColors = {
 
 const MonsterCard = memo(({ monster, displayState }: { monster: Monster; displayState: string }) => {
   const stateStyle = stateColors[displayState as keyof typeof stateColors] || stateColors.happy
+  const backgroundStyle = getBackgroundStyle(monster.current_background || "default")
 
   return (
     <Link key={monster.id} href={`/monster/${monster.id}`}>
@@ -160,9 +163,11 @@ const MonsterCard = memo(({ monster, displayState }: { monster: Monster; display
       >
         <div className="space-y-4">
           <div
-            className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500`}
+            className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500 relative overflow-hidden bg-cover bg-center ${backgroundStyle.className || ""}`}
+            style={backgroundStyle.backgroundImage ? { backgroundImage: backgroundStyle.backgroundImage } : undefined}
           >
-            <div className="w-48 h-48 mx-auto">
+            <div className="absolute inset-0 bg-black/30 rounded-2xl" />
+            <div className="w-48 h-48 mx-auto relative z-10">
               <PixelMonster
                 state={displayState as any}
                 actionAnimation={null}

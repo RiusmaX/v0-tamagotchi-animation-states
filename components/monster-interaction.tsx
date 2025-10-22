@@ -19,6 +19,7 @@ import { LevelDisplay } from "@/components/level-display"
 import { XPAnimation } from "@/components/xp-animation"
 import { LevelUpModal } from "@/components/level-up-modal"
 import { XP_PER_ACTION, addXP, calculateLevelFromXP } from "@/lib/xp-system"
+import { getBackgroundStyle } from "@/lib/backgrounds"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +59,8 @@ type Monster = {
   level?: number
   xp?: number
   total_xp?: number
+  current_background?: string
+  owned_backgrounds?: string[]
 }
 
 export function MonsterInteraction({ monster: initialMonster }: { monster: Monster }) {
@@ -307,6 +310,8 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     }
   }
 
+  const backgroundStyle = getBackgroundStyle(monster.current_background || "default")
+
   return (
     <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -381,8 +386,12 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           />
         </div>
 
-        <div className="mb-4 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-3 sm:p-4 md:p-6 border-4 border-border shadow-inner">
-          <div className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 mx-auto">
+        <div
+          className={`mb-4 rounded-3xl p-3 sm:p-4 md:p-6 border-4 border-border shadow-inner bg-cover bg-center relative overflow-hidden ${backgroundStyle.className || ""}`}
+          style={backgroundStyle.backgroundImage ? { backgroundImage: backgroundStyle.backgroundImage } : undefined}
+        >
+          <div className="absolute inset-0 bg-black/20 rounded-3xl" />
+          <div className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 mx-auto relative z-10">
             <PixelMonster
               state={state}
               actionAnimation={currentAction}
