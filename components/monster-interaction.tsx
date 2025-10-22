@@ -11,7 +11,6 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
 import { addCoins } from "@/lib/currency"
-import { WalletDisplay } from "@/components/wallet-display"
 import { ShopModal } from "@/components/shop-modal"
 import { CoinAnimation } from "@/components/coin-animation"
 import { useSound } from "@/hooks/use-sound"
@@ -42,6 +41,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
+import { updateQuestProgress } from "@/lib/daily-quests"
 
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
 
@@ -188,6 +188,14 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         play("success", 0.5)
       }
 
+      if (action === "feed") {
+        await updateQuestProgress("feed")
+      } else if (action === "play") {
+        await updateQuestProgress("play")
+      } else if (action === "gift") {
+        await updateQuestProgress("gift")
+      }
+
       const actionStateMap = {
         play: "bored",
         feed: "hungry",
@@ -242,7 +250,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         }
       }, 1500)
     },
-    [state, play, monster, supabase],
+    [state, play, monster, supabase, saveStateImmediately],
   )
 
   const handleAccessoryEquipped = useCallback(async () => {
@@ -321,58 +329,51 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         <CoinAnimation trigger={coinTrigger} />
         <XPAnimation trigger={xpTrigger} xpGained={lastXPGained} />
 
-        <div className="flex flex-col gap-3 mb-6">
-          <div className="flex items-center justify-between">
-            <Link href="/dashboard">
-              <Button variant="outline" size="sm" className="sm:size-default bg-transparent">
-                <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Retour</span>
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <WalletDisplay />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="sm:size-default bg-transparent">
-                    <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Renommer
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-red-600">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setShopOpen(true)}
-              className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg"
-              size="lg"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              Boutique
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <Link href="/dashboard">
+            <Button variant="outline" size="sm" className="bg-transparent">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-          </div>
+          </Link>
+
+          <Button
+            onClick={() => setShopOpen(true)}
+            className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg"
+            size="sm"
+          >
+            <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Boutique</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-transparent">
+                <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Renommer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-2 sm:mb-3 font-sans">
+        <div className="text-center mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 mb-2 font-sans">
             {monster.name}
           </h1>
-          <p className="text-muted-foreground text-base sm:text-xl font-medium">
+          <p className="text-muted-foreground text-sm sm:text-base md:text-lg font-medium">
             Prends soin de ton petit monstre adorable !
           </p>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <LevelDisplay
             level={levelInfo.level}
             currentXP={levelInfo.currentXP}
@@ -380,8 +381,8 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           />
         </div>
 
-        <div className="mb-6 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-border shadow-inner sm:mb-0">
-          <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 mx-auto">
+        <div className="mb-4 bg-gradient-to-br from-pink-100/50 via-purple-100/50 to-blue-100/50 rounded-3xl p-3 sm:p-4 md:p-6 border-4 border-border shadow-inner">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 mx-auto">
             <PixelMonster
               state={state}
               actionAnimation={currentAction}
@@ -395,7 +396,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           </div>
         </div>
 
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-4">
           <StatusDisplay state={state} />
         </div>
 
@@ -410,7 +411,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           disabled={isAnimating}
         />
 
-        <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-xs sm:text-sm text-muted-foreground">
           <p className="font-medium">✨ Astuce : Chaque action te rapporte 1 coin !</p>
         </div>
       </Card>

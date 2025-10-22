@@ -10,8 +10,10 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { calculateMonsterState, type MonsterState } from "@/lib/monster-state"
-import { WalletDisplay } from "@/components/wallet-display"
 import { monsterEvents } from "@/lib/monster-events"
+import { calculateMonsterPrice } from "@/lib/monster-pricing"
+import { getUserCoins, spendCoins } from "@/lib/currency"
+import { useSound } from "@/hooks/use-sound"
 
 type Monster = {
   id: string
@@ -200,8 +202,18 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [displayStates, setDisplayStates] = useState<Record<string, string>>({})
   const [monsterNames, setMonsterNames] = useState<Record<string, string>>({})
+  const [userCoins, setUserCoins] = useState<number>(0)
   const router = useRouter()
   const supabase = createClient()
+  const { playSound } = useSound()
+
+  useEffect(() => {
+    const loadCoins = async () => {
+      const coins = await getUserCoins()
+      setUserCoins(coins)
+    }
+    loadCoins()
+  }, [])
 
   useEffect(() => {
     const initialStates: Record<string, string> = {}
@@ -281,12 +293,33 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
   }, [monsters, supabase])
 
   const handleCreateMonster = useCallback(async () => {
+    const price = calculateMonsterPrice(monsters.length)
+
+    if (price > 0) {
+      const currentCoins = await getUserCoins()
+      if (currentCoins < price) {
+        playSound("error")
+        alert(`Vous n'avez pas assez de pièces ! Il vous faut ${price} pièces pour créer ce monstre.`)
+        return
+      }
+    }
+
     setIsCreating(true)
 
     const traits = generateRandomTraits()
     const randomName = monsterNamesList[Math.floor(Math.random() * monsterNamesList.length)]
 
     try {
+      if (price > 0) {
+        const success = await spendCoins(price)
+        if (!success) {
+          playSound("error")
+          alert("Erreur lors du paiement. Veuillez réessayer.")
+          setIsCreating(false)
+          return
+        }
+      }
+
       const { data, error } = await supabase
         .from("monsters")
         .insert({
@@ -300,12 +333,14 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
 
       if (error) throw error
 
+      playSound("success")
       router.push(`/monster/${data.id}`)
     } catch (error) {
       console.error("[v0] Error creating monster:", error)
+      playSound("error")
       setIsCreating(false)
     }
-  }, [userId, supabase, router])
+  }, [userId, supabase, router, monsters.length, playSound])
 
   const monsterCards = useMemo(() => {
     return monsters.map((monster) => {
@@ -315,20 +350,27 @@ export function MonsterList({ monsters, userId }: MonsterListProps) {
     })
   }, [monsters, displayStates, monsterNames])
 
+  const nextMonsterPrice = calculateMonsterPrice(monsters.length)
+  const canAfford = nextMonsterPrice === 0 || userCoins >= nextMonsterPrice
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center flex-wrap gap-4">
-        <Button
-          onClick={handleCreateMonster}
-          disabled={isCreating}
-          size="lg"
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105"
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          {isCreating ? "Création..." : "Créer un nouveau monstre"}
-        </Button>
-
-        <WalletDisplay />
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={handleCreateMonster}
+            disabled={isCreating || !canAfford}
+            size="lg"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            {isCreating
+              ? "Création..."
+              : nextMonsterPrice === 0
+                ? "Créer un nouveau monstre 🎁"
+                : `Créer un nouveau monstre (${nextMonsterPrice} 🪙)`}
+          </Button>
+        </div>
       </div>
 
       {monsters.length === 0 ? (
