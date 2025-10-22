@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, User, Trophy } from "lucide-react"
+import { Sparkles, User, Trophy, Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -62,6 +62,17 @@ export function GameNav() {
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Mes Monstres
+            </Button>
+          </Link>
+          <Link href="/gallery">
+            <Button
+              variant={isActive("/gallery") ? "default" : "ghost"}
+              className={
+                isActive("/gallery") ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white" : "hover:bg-blue-100"
+              }
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Galerie
             </Button>
           </Link>
           <Link href="/quests">

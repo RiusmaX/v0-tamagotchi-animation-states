@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Sparkles, User, Trophy } from "lucide-react"
+import { Sparkles, User, Trophy, Users } from "lucide-react"
 import { WalletDisplay } from "@/components/wallet-display"
 
 export function MobileBottomNav() {
@@ -26,6 +26,21 @@ export function MobileBottomNav() {
               {isActive("/dashboard") && <div className="absolute -inset-1 bg-white/20 rounded-full animate-pulse" />}
             </div>
             <span className="text-xs font-bold tracking-wider">Monstres</span>
+          </Link>
+
+          <Link
+            href="/gallery"
+            className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ${
+              isActive("/gallery")
+                ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white scale-105 shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            }`}
+          >
+            <div className="relative">
+              <Users className="h-6 w-6" />
+              {isActive("/gallery") && <div className="absolute -inset-1 bg-white/20 rounded-full animate-pulse" />}
+            </div>
+            <span className="text-xs font-bold tracking-wider">Galerie</span>
           </Link>
 
           <Link

@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Sparkles } from "lucide-react"
+import { Plus, Sparkles, Globe } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -29,6 +29,7 @@ type Monster = {
   level?: number
   xp?: number
   current_background?: string // Added background field
+  is_public?: boolean // Added public indicator
 }
 
 type MonsterListProps = {
@@ -159,8 +160,16 @@ const MonsterCard = memo(({ monster, displayState }: { monster: Monster; display
   return (
     <Link key={monster.id} href={`/monster/${monster.id}`}>
       <Card
-        className={`p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 ${stateStyle.border} bg-card/95 backdrop-blur-sm`}
+        className={`p-6 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-4 ${stateStyle.border} bg-card/95 backdrop-blur-sm relative`}
       >
+        {monster.is_public && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-2 border-blue-400 text-xs font-bold px-2 py-1 flex items-center gap-1">
+              <Globe className="h-3 w-3" />
+              Public
+            </Badge>
+          </div>
+        )}
         <div className="space-y-4">
           <div
             className={`${stateStyle.bg} rounded-2xl p-4 border-2 ${stateStyle.border} transition-colors duration-500 relative overflow-hidden bg-cover bg-center ${backgroundStyle.className || ""}`}

@@ -23,7 +23,7 @@ async function DashboardContent() {
 
   const { data: monsters, error } = await supabase
     .from("monsters")
-    .select("*, level, xp, current_background")
+    .select("*, level, xp, current_background, is_public")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 

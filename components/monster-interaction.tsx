@@ -6,7 +6,7 @@ import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ShoppingBag, Trash2, MoreVertical, Edit } from "lucide-react"
+import { ArrowLeft, ShoppingBag, Trash2, MoreVertical, Edit, Globe, Lock } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
@@ -61,6 +61,7 @@ type Monster = {
   total_xp?: number
   current_background?: string
   owned_backgrounds?: string[]
+  is_public?: boolean
 }
 
 export function MonsterInteraction({ monster: initialMonster }: { monster: Monster }) {
@@ -84,6 +85,8 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [newName, setNewName] = useState(initialMonster.name)
   const [isRenaming, setIsRenaming] = useState(false)
+  const [isPublic, setIsPublic] = useState(initialMonster.is_public || false)
+  const [isTogglingPublic, setIsTogglingPublic] = useState(false)
   const supabase = createClient()
   const router = useRouter()
   const { play } = useSound()
@@ -315,6 +318,31 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
     }
   }
 
+  const handleTogglePublic = async () => {
+    setIsTogglingPublic(true)
+
+    try {
+      const newPublicStatus = !isPublic
+
+      const { error } = await supabase
+        .from("monsters")
+        .update({ is_public: newPublicStatus })
+        .eq("id", monster.id)
+        .eq("user_id", monster.user_id)
+
+      if (error) throw error
+
+      setIsPublic(newPublicStatus)
+      setMonster({ ...monster, is_public: newPublicStatus })
+      play("success", 0.3)
+    } catch (error) {
+      console.error("[v0] Error toggling public status:", error)
+      play("error", 0.3)
+    } finally {
+      setIsTogglingPublic(false)
+    }
+  }
+
   const backgroundStyle = getBackgroundStyle(monster.current_background || "default")
 
   return (
@@ -362,6 +390,19 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleTogglePublic} disabled={isTogglingPublic}>
+                {isPublic ? (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Rendre privé
+                  </>
+                ) : (
+                  <>
+                    <Globe className="mr-2 h-4 w-4" />
+                    Partager avec la communauté
+                  </>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Renommer
