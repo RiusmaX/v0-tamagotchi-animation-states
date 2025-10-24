@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Sparkles, Heart, ShoppingBag, Users } from "lucide-react"
+import { Sparkles, Heart, ShoppingBag, Users, TrendingUp, Coins } from "lucide-react"
+import { RandomMonsterPreview } from "@/components/random-monster-preview"
 
 export default function LandingPage() {
   return (
@@ -48,13 +49,27 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Features */}
+          <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 mb-8">
+            <Card className="p-8 sm:p-12 bg-white/80 backdrop-blur-sm border-2 border-purple-300 shadow-xl">
+              <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 tracking-wider">
+                Découvrez un monstre unique
+              </h2>
+              <p className="text-center text-muted-foreground mb-8 tracking-wide">
+                Chaque monstre est généré aléatoirement avec des couleurs, formes et styles uniques. Rechargez la page
+                pour en voir un nouveau !
+              </p>
+              <div className="flex justify-center">
+                <RandomMonsterPreview />
+              </div>
+            </Card>
+          </section>
+
           <section id="fonctionnalites" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 tracking-wider">
               Fonctionnalités
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-pink-200 hover:border-pink-300 transition-colors">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-pink-200 hover:border-pink-300 transition-all hover:shadow-lg hover:-translate-y-1">
                 <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
@@ -64,7 +79,7 @@ export default function LandingPage() {
                 </p>
               </Card>
 
-              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-purple-200 hover:border-purple-300 transition-colors">
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-purple-200 hover:border-purple-300 transition-all hover:shadow-lg hover:-translate-y-1">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mb-4">
                   <Heart className="w-6 h-6 text-white" />
                 </div>
@@ -74,18 +89,38 @@ export default function LandingPage() {
                 </p>
               </Card>
 
-              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-blue-200 hover:border-blue-300 transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-4">
-                  <ShoppingBag className="w-6 h-6 text-white" />
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-emerald-200 hover:border-emerald-300 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <TrendingUp className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-foreground tracking-wider">Accessoires</h3>
+                <h3 className="text-xl font-bold mb-2 text-foreground tracking-wider">Système de Niveaux</h3>
                 <p className="text-muted-foreground tracking-wide">
-                  Gagnez des pièces et achetez des chapeaux, lunettes et chaussures pour personnaliser vos monstres
+                  Gagnez de l'XP en prenant soin de vos monstres et débloquez de nouveaux niveaux
                 </p>
               </Card>
 
-              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-yellow-200 hover:border-yellow-300 transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mb-4">
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-amber-200 hover:border-amber-300 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mb-4">
+                  <Coins className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-foreground tracking-wider">Gagnez des Pièces</h3>
+                <p className="text-muted-foreground tracking-wide">
+                  Gagnez des pièces en jouant et dépensez-les dans la boutique d'accessoires
+                </p>
+              </Card>
+
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-blue-200 hover:border-blue-300 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingBag className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-foreground tracking-wider">Boutique d'Accessoires</h3>
+                <p className="text-muted-foreground tracking-wide">
+                  Achetez des chapeaux, lunettes et chaussures pour personnaliser vos monstres
+                </p>
+              </Card>
+
+              <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-violet-200 hover:border-violet-300 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center mb-4">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground tracking-wider">Collection Illimitée</h3>
@@ -96,9 +131,44 @@ export default function LandingPage() {
             </div>
           </section>
 
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 tracking-wider">
+              Comment ça marche ?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg">
+                  1
+                </div>
+                <h3 className="text-xl font-bold mb-2 tracking-wider">Créez votre monstre</h3>
+                <p className="text-muted-foreground tracking-wide">
+                  Générez un monstre unique avec des caractéristiques aléatoires en pixel art
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg">
+                  2
+                </div>
+                <h3 className="text-xl font-bold mb-2 tracking-wider">Prenez-en soin</h3>
+                <p className="text-muted-foreground tracking-wide">
+                  Nourrissez, jouez et faites dormir votre monstre pour gagner de l'XP et des pièces
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg">
+                  3
+                </div>
+                <h3 className="text-xl font-bold mb-2 tracking-wider">Personnalisez</h3>
+                <p className="text-muted-foreground tracking-wide">
+                  Achetez des accessoires dans la boutique et créez le style parfait pour votre monstre
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* CTA Section */}
           <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <Card className="p-6 sm:p-8 md:p-12 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 border-2 border-purple-300">
+            <Card className="p-6 sm:p-8 md:p-12 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 border-2 border-purple-300 shadow-xl">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-foreground text-balance tracking-wider">
                 Prêt à adopter votre premier monstre ?
               </h2>

@@ -18,6 +18,11 @@ ADD COLUMN IF NOT EXISTS shoes TEXT DEFAULT NULL;
 -- Enable Row Level Security on user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies before creating them to make script idempotent
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
+
 -- Create policies for user_profiles
 CREATE POLICY "Users can view their own profile"
   ON user_profiles
