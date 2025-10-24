@@ -223,8 +223,20 @@ export function BackgroundShop({
             return (
               <Card
                 key={background.id}
-                className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${current ? "ring-2 ring-green-500" : ""}`}
+                className={`p-3 sm:p-4 hover:shadow-lg transition-shadow ${current ? "ring-2 ring-green-500" : ""} relative`}
               >
+                {current && (
+                  <span className="absolute top-2 right-2 flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold shadow-md z-10">
+                    <Check className="h-3 w-3" />
+                    Actif
+                  </span>
+                )}
+                {owned && !current && (
+                  <span className="absolute top-2 right-2 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold shadow-md z-10">
+                    Possédé
+                  </span>
+                )}
+
                 <div
                   className={`w-full h-24 sm:h-32 rounded-lg mb-3 flex items-center justify-center text-4xl sm:text-5xl border-2 border-border bg-cover bg-center ${!background.imageUrl ? `bg-gradient-to-br ${background.gradient}` : ""}`}
                   style={background.imageUrl ? { backgroundImage: `url(${background.imageUrl})` } : undefined}
@@ -234,20 +246,7 @@ export function BackgroundShop({
 
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1 mr-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-bold text-sm sm:text-base">{background.name}</h4>
-                      {current && (
-                        <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                          <Check className="h-3 w-3" />
-                          Actif
-                        </span>
-                      )}
-                      {owned && !current && (
-                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                          Possédé
-                        </span>
-                      )}
-                    </div>
+                    <h4 className="font-bold text-sm sm:text-base">{background.name}</h4>
                     <p className="text-xs text-muted-foreground mt-1">{background.description}</p>
                   </div>
                   {!owned && background.price > 0 && (

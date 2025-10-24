@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { getAnimationByAction } from "@/lib/animation-unlocks"
 
 type MonsterState = "happy" | "sad" | "hungry" | "sleepy" | "sick" | "dirty" | "bored" | "excited"
 type ActionAnimation = "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift" | null
@@ -32,6 +33,7 @@ interface PixelMonsterProps {
     glasses?: string
     shoes?: string
   }
+  level?: number
 }
 
 const defaultTraits: MonsterTraits = {
@@ -47,7 +49,13 @@ const defaultTraits: MonsterTraits = {
   accessory: "none",
 }
 
-export function PixelMonster({ state, actionAnimation, traits = defaultTraits, accessories }: PixelMonsterProps) {
+export function PixelMonster({
+  state,
+  actionAnimation,
+  traits = defaultTraits,
+  accessories,
+  level = 1,
+}: PixelMonsterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const frameRef = useRef(0)
   const actionFrameRef = useRef(0)
@@ -71,7 +79,7 @@ export function PixelMonster({ state, actionAnimation, traits = defaultTraits, a
       } else {
         actionFrameRef.current = 0
       }
-      drawMonster(ctx, state, frameRef.current, actionAnimation, actionFrameRef.current, traits, accessories)
+      drawMonster(ctx, state, frameRef.current, actionAnimation, actionFrameRef.current, traits, accessories, level)
       animationId = requestAnimationFrame(animate)
     }
 
@@ -82,7 +90,7 @@ export function PixelMonster({ state, actionAnimation, traits = defaultTraits, a
         cancelAnimationFrame(animationId)
       }
     }
-  }, [state, actionAnimation, traits, accessories])
+  }, [state, actionAnimation, traits, accessories, level])
 
   return <canvas ref={canvasRef} className="pixel-art w-full h-full mx-auto" style={{ imageRendering: "pixelated" }} />
 }
@@ -99,6 +107,7 @@ function drawMonster(
     glasses?: string
     shoes?: string
   },
+  level = 1,
 ) {
   const pixelSize = 6
   const bounce = Math.sin(frame * 0.05) * 3
@@ -172,7 +181,7 @@ function drawMonster(
 
   drawStateEffects(ctx, state, bodyY, pixelSize, frame)
 
-  drawActionAnimations(ctx, actionAnimation, actionFrame, bodyY, pixelSize)
+  drawActionAnimations(ctx, actionAnimation, actionFrame, bodyY, pixelSize, level)
 }
 
 function drawBody(
@@ -563,7 +572,7 @@ function drawPurchasedAccessories(
       // Sunglasses
       ctx.fillRect(60, bodyY + 21, pixelSize * 3, pixelSize * 2)
       ctx.fillRect(90, bodyY + 21, pixelSize * 3, pixelSize * 2)
-      ctx.fillRect(69, bodyY + 24, pixelSize * 3, pixelSize)
+      ctx.fillRect(74, bodyY + 24, pixelSize * 2, 2)
     } else if (accessories.glasses.includes("nerd") || accessories.glasses.includes("reading")) {
       // Round glasses or Reading glasses
       ctx.strokeStyle = getAccessoryColor(accessories.glasses)
@@ -599,7 +608,7 @@ function drawPurchasedAccessories(
       ctx.fillStyle = "#00FFFF"
       ctx.fillRect(60, bodyY + 21, pixelSize * 3, pixelSize * 2)
       ctx.fillRect(90, bodyY + 21, pixelSize * 3, pixelSize * 2)
-      ctx.fillRect(69, bodyY + 24, pixelSize * 3, pixelSize)
+      ctx.fillRect(74, bodyY + 24, pixelSize * 2, 2)
       ctx.fillStyle = "#FF00FF"
       ctx.fillRect(63, bodyY + 21, pixelSize / 2, pixelSize / 2)
       ctx.fillRect(93, bodyY + 21, pixelSize / 2, pixelSize / 2)
@@ -611,7 +620,7 @@ function drawPurchasedAccessories(
         ctx.fillRect(60 + i, bodyY + 21, pixelSize / 2, pixelSize * 2)
         ctx.fillRect(90 + i, bodyY + 21, pixelSize / 2, pixelSize * 2)
       }
-      ctx.fillRect(69, bodyY + 24, pixelSize * 3, 2)
+      ctx.fillRect(74, bodyY + 24, pixelSize * 2, 2)
     }
   }
 
@@ -802,15 +811,21 @@ function drawActionAnimations(
   actionFrame: number,
   bodyY: number,
   pixelSize: number,
+  level = 1,
 ) {
+  if (!actionAnimation) return
+
+  const specialAnimation = getAnimationByAction(actionAnimation, level)
+  const isSpecial = specialAnimation !== null
+
   if (actionAnimation === "play") {
-    ctx.fillStyle = "#FF6B9D"
+    ctx.fillStyle = isSpecial ? "#FFD700" : "#FF6B9D"
     const heart1Y = bodyY - 25 - (actionFrame % 35)
     const heart2Y = bodyY - 15 - ((actionFrame + 18) % 35)
 
-    for (let i = 0; i < 2; i++) {
-      const hY = i === 0 ? heart1Y : heart2Y
-      const hX = i === 0 ? 20 : 130
+    for (let i = 0; i < (isSpecial ? 4 : 2); i++) {
+      const hY = i < 2 ? (i === 0 ? heart1Y : heart2Y) : i === 2 ? heart1Y - 20 : heart2Y - 20
+      const hX = i < 2 ? (i === 0 ? 20 : 130) : i === 2 ? 40 : 110
 
       ctx.fillRect(hX, hY, pixelSize, pixelSize)
       ctx.fillRect(hX + 6, hY - 6, pixelSize, pixelSize)
@@ -818,24 +833,37 @@ function drawActionAnimations(
       ctx.fillRect(hX + 3, hY - 3, pixelSize * 2, pixelSize)
       ctx.fillRect(hX + 3, hY + 3, pixelSize * 2, pixelSize * 2)
     }
+
+    if (isSpecial) {
+      ctx.fillStyle = "#FFFFFF"
+      for (let i = 0; i < 8; i++) {
+        const angle = (actionFrame * 0.2 + i * 0.8) % (Math.PI * 2)
+        const sparkleX = 80 + Math.cos(angle) * 50
+        const sparkleY = bodyY + Math.sin(angle) * 40
+        ctx.fillRect(sparkleX, sparkleY, pixelSize / 2, pixelSize)
+      }
+    }
   }
 
   if (actionAnimation === "feed") {
-    ctx.fillStyle = "#FF6B35"
+    ctx.fillStyle = isSpecial ? "#FFD700" : "#FF6B35"
     const foodY = -25 + actionFrame * 3
 
     if (foodY < bodyY + 25) {
-      ctx.fillRect(75, foodY, pixelSize * 3, pixelSize * 3)
-      ctx.fillRect(69, foodY + 6, pixelSize * 4, pixelSize * 2)
+      const foodSize = isSpecial ? 4 : 3
+      ctx.fillRect(75 - (isSpecial ? 3 : 0), foodY, pixelSize * foodSize, pixelSize * foodSize)
+      ctx.fillRect(69 - (isSpecial ? 3 : 0), foodY + 6, pixelSize * (foodSize + 1), pixelSize * 2)
 
       ctx.fillStyle = "#4CAF50"
       ctx.fillRect(87, foodY - 6, pixelSize, pixelSize * 2)
     } else {
-      ctx.fillStyle = "#FFE66D"
-      for (let i = 0; i < 5; i++) {
-        const angle = (actionFrame * 0.2 + i * 1.2) % (Math.PI * 2)
-        const sparkleX = 80 + Math.cos(angle) * 35
-        const sparkleY = bodyY + 25 + Math.sin(angle) * 25
+      ctx.fillStyle = isSpecial ? "#FFD700" : "#FFE66D"
+      const sparkleCount = isSpecial ? 10 : 5
+      for (let i = 0; i < sparkleCount; i++) {
+        const angle = (actionFrame * 0.2 + i * (2 / sparkleCount)) % (Math.PI * 2)
+        const radius = isSpecial ? 45 : 35
+        const sparkleX = 80 + Math.cos(angle) * radius
+        const sparkleY = bodyY + 25 + Math.sin(angle) * (isSpecial ? 30 : 25)
         ctx.fillRect(sparkleX, sparkleY, pixelSize, pixelSize)
       }
     }
@@ -847,18 +875,21 @@ function drawActionAnimations(
     ctx.fillStyle = `rgba(255, 255, 255, ${pillowAlpha})`
     ctx.fillRect(51, bodyY + 60, pixelSize * 9, pixelSize * 3)
 
-    ctx.fillStyle = "#FFE66D"
+    ctx.fillStyle = isSpecial ? "#FFD700" : "#FFE66D"
     const moonX = 120 + Math.sin(actionFrame * 0.1) * 6
-    ctx.fillRect(moonX, 25, pixelSize * 3, pixelSize * 3)
+    const moonSize = isSpecial ? 4 : 3
+    ctx.fillRect(moonX, 25, pixelSize * moonSize, pixelSize * moonSize)
     ctx.fillRect(moonX + 12, 19, pixelSize, pixelSize)
     ctx.fillRect(moonX + 12, 37, pixelSize, pixelSize)
 
     ctx.fillStyle = "#FFFFFF"
-    const stars = [
-      { x: 25, y: 35, phase: 0.15 },
-      { x: 135, y: 45, phase: 0.12 },
-      { x: 35, y: 55, phase: 0.18 },
-    ]
+    const starCount = isSpecial ? 6 : 3
+    const stars = Array.from({ length: starCount }, (_, i) => ({
+      x: 25 + (i % 3) * 55,
+      y: 35 + Math.floor(i / 3) * 25,
+      phase: 0.15 + i * 0.03,
+    }))
+
     stars.forEach((star) => {
       const twinkle = Math.abs(Math.sin(actionFrame * star.phase))
       ctx.globalAlpha = twinkle
@@ -870,24 +901,31 @@ function drawActionAnimations(
   }
 
   if (actionAnimation === "wash") {
-    ctx.fillStyle = "#E0F2FE"
-    const bubbles = [
-      { x: 60, y: bodyY - 10 - (actionFrame % 40), size: 2 },
-      { x: 80, y: bodyY - 5 - ((actionFrame + 10) % 40), size: 3 },
-      { x: 100, y: bodyY - 15 - ((actionFrame + 20) % 40), size: 2 },
-      { x: 70, y: bodyY + 10 - ((actionFrame + 15) % 40), size: 2.5 },
-    ]
+    ctx.fillStyle = isSpecial ? "#7DD3FC" : "#E0F2FE"
+    const bubbleCount = isSpecial ? 8 : 4
+    const bubbles = Array.from({ length: bubbleCount }, (_, i) => ({
+      x: 60 + (i % 4) * 15,
+      y: bodyY - 10 - ((actionFrame + i * 10) % 40),
+      size: 2 + (i % 2),
+    }))
 
     bubbles.forEach((bubble) => {
       ctx.globalAlpha = 0.8
       ctx.fillRect(bubble.x, bubble.y, pixelSize * bubble.size, pixelSize * bubble.size)
       ctx.fillStyle = "#FFFFFF"
       ctx.fillRect(bubble.x + 2, bubble.y + 2, pixelSize / 2, pixelSize / 2)
-      ctx.fillStyle = "#E0F2FE"
+      ctx.fillStyle = isSpecial ? "#7DD3FC" : "#E0F2FE"
       ctx.globalAlpha = 1
     })
 
-    if (actionFrame > 20) {
+    if (actionFrame > 20 && isSpecial) {
+      const colors = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#8B00FF"]
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = colors[i]
+        const dropY = bodyY + 20 + ((actionFrame - 20 + i * 5) % 30) * 2
+        ctx.fillRect(60 + i * 10, dropY, pixelSize / 2, pixelSize)
+      }
+    } else if (actionFrame > 20) {
       ctx.fillStyle = "#7DD3FC"
       for (let i = 0; i < 3; i++) {
         const dropY = bodyY + 20 + ((actionFrame - 20 + i * 5) % 30) * 2
@@ -898,19 +936,20 @@ function drawActionAnimations(
 
   if (actionAnimation === "heal") {
     if (actionFrame < 25) {
-      ctx.fillStyle = "#EF4444"
+      ctx.fillStyle = isSpecial ? "#10B981" : "#EF4444"
       const bottleY = -20 + actionFrame * 2.5
-      ctx.fillRect(75, bottleY, pixelSize * 3, pixelSize * 4)
+      const bottleSize = isSpecial ? 4 : 3
+      ctx.fillRect(75 - (isSpecial ? 3 : 0), bottleY, pixelSize * bottleSize, pixelSize * (bottleSize + 1))
       ctx.fillStyle = "#FFFFFF"
-      ctx.fillRect(78, bottleY + 6, pixelSize, pixelSize * 2)
-      ctx.fillRect(75, bottleY - 3, pixelSize * 3, pixelSize)
+      ctx.fillRect(78 - (isSpecial ? 3 : 0), bottleY + 6, pixelSize, pixelSize * 2)
+      ctx.fillRect(75 - (isSpecial ? 3 : 0), bottleY - 3, pixelSize * bottleSize, pixelSize)
     } else {
       ctx.fillStyle = "#10B981"
-      const plusPositions = [
-        { x: 60, y: bodyY - 10 },
-        { x: 90, y: bodyY - 5 },
-        { x: 75, y: bodyY + 10 },
-      ]
+      const plusCount = isSpecial ? 6 : 3
+      const plusPositions = Array.from({ length: plusCount }, (_, i) => ({
+        x: 60 + (i % 3) * 15,
+        y: bodyY - 10 + Math.floor(i / 3) * 20,
+      }))
 
       plusPositions.forEach((pos, i) => {
         const offset = ((actionFrame - 25 + i * 5) % 20) * 2
@@ -921,7 +960,7 @@ function drawActionAnimations(
   }
 
   if (actionAnimation === "hug") {
-    ctx.fillStyle = "#FFB5E8"
+    ctx.fillStyle = isSpecial ? "#FFD700" : "#FFB5E8"
     const hugProgress = Math.min(actionFrame / 20, 1)
     const armX = 40 - hugProgress * 15
 
@@ -929,12 +968,13 @@ function drawActionAnimations(
     ctx.fillRect(160 - armX - 12, bodyY + 20, pixelSize * 2, pixelSize * 4)
 
     if (actionFrame > 15) {
-      ctx.fillStyle = "#FF6B9D"
+      ctx.fillStyle = isSpecial ? "#FFD700" : "#FF6B9D"
+      const heartCount = isSpecial ? 6 : 3
       const heartY = bodyY - 20 - ((actionFrame - 15) % 30)
 
-      for (let i = 0; i < 3; i++) {
-        const hY = heartY - i * 15
-        const hX = 70 + i * 10
+      for (let i = 0; i < heartCount; i++) {
+        const hY = heartY - (i % 3) * 15
+        const hX = 70 + (i % 3) * 10 + Math.floor(i / 3) * 30
 
         ctx.fillRect(hX, hY, pixelSize / 2, pixelSize / 2)
         ctx.fillRect(hX + 3, hY - 3, pixelSize / 2, pixelSize / 2)
@@ -946,19 +986,22 @@ function drawActionAnimations(
 
   if (actionAnimation === "gift") {
     if (actionFrame < 30) {
-      ctx.fillStyle = "#F59E0B"
+      ctx.fillStyle = isSpecial ? "#FFD700" : "#F59E0B"
       const giftY = -20 + actionFrame * 2.5
-      ctx.fillRect(72, giftY, pixelSize * 4, pixelSize * 4)
+      const giftSize = isSpecial ? 5 : 4
+      ctx.fillRect(72 - (isSpecial ? 3 : 0), giftY, pixelSize * giftSize, pixelSize * giftSize)
 
-      ctx.fillStyle = "#EF4444"
-      ctx.fillRect(78, giftY - 3, pixelSize, pixelSize * 5)
-      ctx.fillRect(72, giftY + 6, pixelSize * 4, pixelSize)
+      ctx.fillStyle = isSpecial ? "#FF0000" : "#EF4444"
+      ctx.fillRect(78 - (isSpecial ? 3 : 0), giftY - 3, pixelSize, pixelSize * (giftSize + 1))
+      ctx.fillRect(72 - (isSpecial ? 3 : 0), giftY + 6, pixelSize * giftSize, pixelSize)
     } else {
-      ctx.fillStyle = "#F59E0B"
-      const confettiColors = ["#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6"]
+      const confettiColors = isSpecial
+        ? ["#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6", "#FFD700", "#FF6B9D"]
+        : ["#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6"]
 
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2
+      const confettiCount = isSpecial ? 20 : 12
+      for (let i = 0; i < confettiCount; i++) {
+        const angle = (i / confettiCount) * Math.PI * 2
         const distance = (actionFrame - 30) * 3
         const x = 80 + Math.cos(angle) * distance
         const y = bodyY + 20 + Math.sin(angle) * distance

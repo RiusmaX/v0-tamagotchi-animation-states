@@ -1,12 +1,20 @@
 "use client"
 
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+
+import { DropdownMenuContent } from "@/components/ui/dropdown-menu"
+
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+import { DropdownMenu } from "@/components/ui/dropdown-menu"
+
 import { useState, useEffect, useCallback, useRef } from "react"
 import { PixelMonster, type MonsterTraits } from "@/components/pixel-monster"
 import { ActionButtons } from "@/components/action-buttons"
 import { StatusDisplay } from "@/components/status-display"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ShoppingBag, Trash2, MoreVertical, Edit, Globe, Lock } from "lucide-react"
+import { ArrowLeft, ShoppingBag, Trash2, MoreVertical, Edit, Globe, Lock, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { calculateMonsterState, getRandomStateChangeInterval, type MonsterState } from "@/lib/monster-state"
@@ -20,6 +28,8 @@ import { XPAnimation } from "@/components/xp-animation"
 import { LevelUpModal } from "@/components/level-up-modal"
 import { XP_PER_ACTION, addXP, calculateLevelFromXP } from "@/lib/xp-system"
 import { getBackgroundStyle } from "@/lib/backgrounds"
+import { AnimationsModal } from "@/components/animations-modal"
+import { getAnimationByAction } from "@/lib/animation-unlocks"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +40,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -83,10 +92,11 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
-  const [newName, setNewName] = useState(initialMonster.name)
   const [isRenaming, setIsRenaming] = useState(false)
   const [isPublic, setIsPublic] = useState(initialMonster.is_public || false)
   const [isTogglingPublic, setIsTogglingPublic] = useState(false)
+  const [animationsModalOpen, setAnimationsModalOpen] = useState(false)
+  const [newName, setNewName] = useState("") // Declare newName and setNewName here
   const supabase = createClient()
   const router = useRouter()
   const { play } = useSound()
@@ -186,7 +196,14 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
 
   const handleAction = useCallback(
     async (action: "play" | "feed" | "sleep" | "wash" | "heal" | "hug" | "gift") => {
-      play("action", 0.3)
+      const specialAnimation = getAnimationByAction(action, levelInfo.level)
+
+      if (specialAnimation) {
+        play("success", 0.3)
+      } else {
+        play("action", 0.3)
+      }
+
       setIsAnimating(true)
       setCurrentAction(action)
 
@@ -213,7 +230,6 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         setShowLevelUp(true)
         play("success", 0.5)
 
-        // Award 5 coins for leveling up
         await addCoins(5)
         play("coin", 0.4)
         setCoinTrigger((prev) => prev + 1)
@@ -281,7 +297,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
         }
       }, 1500)
     },
-    [state, play, monster, supabase, saveStateImmediately],
+    [state, play, monster, supabase, saveStateImmediately, levelInfo.level],
   )
 
   const handleAccessoryEquipped = useCallback(async () => {
@@ -395,6 +411,16 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           </Link>
 
           <Button
+            onClick={() => setAnimationsModalOpen(true)}
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold shadow-lg border-0"
+          >
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Animations</span>
+          </Button>
+
+          <Button
             onClick={() => setShopOpen(true)}
             className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg"
             size="sm"
@@ -484,6 +510,7 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
           onHug={() => handleAction("hug")}
           onGift={() => handleAction("gift")}
           disabled={isAnimating}
+          level={levelInfo.level}
         />
 
         <div className="mt-4 text-center text-xs sm:text-sm text-muted-foreground">
@@ -553,6 +580,13 @@ export function MonsterInteraction({ monster: initialMonster }: { monster: Monst
       </AlertDialog>
 
       <LevelUpModal show={showLevelUp} newLevel={newLevel} onClose={() => setShowLevelUp(false)} />
+
+      <AnimationsModal
+        open={animationsModalOpen}
+        onOpenChange={setAnimationsModalOpen}
+        level={levelInfo.level}
+        totalXP={monster.total_xp || 0}
+      />
     </main>
   )
 }

@@ -13,13 +13,65 @@ import {
   getRarityBorderColor,
   getRarityBackground,
 } from "@/lib/currency"
-import { Coins, Check } from "lucide-react"
+import { Coins, Check, Zap } from "lucide-react"
 import { Toast, ToastContainer } from "@/components/ui/toast"
 import { createClient } from "@/lib/supabase/client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BackgroundShop } from "@/components/background-shop"
 import { RarityBadge } from "@/components/rarity-badge"
 import { AccessoryPreview } from "@/components/accessory-preview"
+import { addXP } from "@/lib/xp-system"
+
+const XP_PACKAGES = [
+  {
+    id: "xp_small",
+    name: "Petit Boost XP",
+    description: "Un petit coup de pouce pour progresser",
+    xp: 50,
+    price: 10,
+    icon: "⚡",
+  },
+  {
+    id: "xp_medium",
+    name: "Boost XP Moyen",
+    description: "Accélérez votre progression",
+    xp: 150,
+    price: 25,
+    icon: "✨",
+  },
+  {
+    id: "xp_large",
+    name: "Grand Boost XP",
+    description: "Un boost significatif d'expérience",
+    xp: 300,
+    price: 45,
+    icon: "💫",
+  },
+  {
+    id: "xp_mega",
+    name: "Méga Boost XP",
+    description: "Montez de niveau rapidement !",
+    xp: 500,
+    price: 70,
+    icon: "🌟",
+  },
+  {
+    id: "xp_ultra",
+    name: "Ultra Boost XP",
+    description: "Le boost ultime pour les champions",
+    xp: 1000,
+    price: 120,
+    icon: "⭐",
+  },
+  {
+    id: "xp_legendary",
+    name: "Boost XP Légendaire",
+    description: "Devenez une légende instantanément !",
+    xp: 2500,
+    price: 250,
+    icon: "🔥",
+  },
+]
 
 interface ShopModalProps {
   open: boolean
@@ -62,6 +114,7 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
   const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null)
   const [purchasing, setPurchasing] = useState(false)
   const [monsterAccessories, setMonsterAccessories] = useState<MonsterAccessories | null>(null)
+  const [monsterXP, setMonsterXP] = useState({ level: 1, xp: 0, total_xp: 0 })
   const [toast, setToast] = useState<{
     show: boolean
     title: string
@@ -73,6 +126,7 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     if (open) {
       loadCoins()
       loadMonsterAccessories()
+      loadMonsterXP()
     }
   }, [open])
 
@@ -99,25 +153,38 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     setMonsterAccessories(data)
   }
 
+  const loadMonsterXP = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase.from("monsters").select("level, xp, total_xp").eq("id", monsterId).single()
+
+    if (error) {
+      console.error("[v0] Error loading monster XP:", error)
+      return
+    }
+
+    setMonsterXP({
+      level: data.level || 1,
+      xp: data.xp || 0,
+      total_xp: data.total_xp || 0,
+    })
+  }
+
   const handleAction = async (accessory: Accessory) => {
     if (purchasing) return
 
     const isOwned = isAccessoryOwned(accessory)
     const isEquipped = isAccessoryEquipped(accessory)
 
-    // If already equipped, unequip it
     if (isEquipped) {
       await handleUnequip(accessory)
       return
     }
 
-    // If owned but not equipped, equip it for free
     if (isOwned) {
       await handleEquip(accessory)
       return
     }
 
-    // If not owned, purchase it
     await handlePurchase(accessory)
   }
 
@@ -227,7 +294,6 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     setPurchasing(true)
     setSelectedAccessory(accessory)
 
-    // Spend coins
     const success = await spendCoins(accessory.price)
 
     if (!success) {
@@ -246,13 +312,11 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     const ownedColumn = getOwnedColumnName(accessory.type)
     const equippedColumn = getEquippedColumnName(accessory.type)
 
-    // Get current owned accessories
     const { data: currentData } = await supabase.from("monsters").select(ownedColumn).eq("id", monsterId).single()
 
     const currentOwned = (currentData?.[ownedColumn] as string[]) || []
     const newOwned = [...currentOwned, accessory.id]
 
-    // Update both owned and equipped
     const { error } = await supabase
       .from("monsters")
       .update({
@@ -274,7 +338,6 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
       return
     }
 
-    // Refresh data
     await loadCoins()
     await loadMonsterAccessories()
     setPurchasing(false)
@@ -285,6 +348,75 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
       show: true,
       title: "Achat réussi !",
       description: `${accessory.name} a été acheté et équipé avec succès.`,
+      variant: "success",
+    })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handlePurchaseXP = async (xpPackage: (typeof XP_PACKAGES)[0]) => {
+    if (coins < xpPackage.price) {
+      setToast({
+        show: true,
+        title: "Pas assez de coins",
+        description: `Il vous faut ${xpPackage.price} coins pour acheter ce boost XP.`,
+        variant: "error",
+      })
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    setPurchasing(true)
+
+    const success = await spendCoins(xpPackage.price)
+
+    if (!success) {
+      setToast({
+        show: true,
+        title: "Erreur",
+        description: "Une erreur est survenue lors du paiement.",
+        variant: "error",
+      })
+      setPurchasing(false)
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    const xpResult = addXP(monsterXP.total_xp, xpPackage.xp)
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("monsters")
+      .update({
+        level: xpResult.newLevel,
+        xp: xpResult.newCurrentXP,
+        total_xp: xpResult.newTotalXP,
+      })
+      .eq("id", monsterId)
+
+    if (error) {
+      console.error("[v0] Error updating monster XP:", error)
+      setToast({
+        show: true,
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'achat du boost XP.",
+        variant: "error",
+      })
+      setPurchasing(false)
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+
+    await loadCoins()
+    await loadMonsterXP()
+    setPurchasing(false)
+    onAccessoryEquipped()
+
+    const levelUpMessage = xpResult.leveledUp ? ` Vous êtes passé au niveau ${xpResult.newLevel} !` : ""
+
+    setToast({
+      show: true,
+      title: "Boost XP acheté !",
+      description: `+${xpPackage.xp} XP ajoutés avec succès.${levelUpMessage}`,
       variant: "success",
     })
     setTimeout(() => setToast(null), 3000)
@@ -328,7 +460,6 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
     {} as Record<AccessoryType, Accessory[]>,
   )
 
-  // Sort each group by rarity (common -> legendary) and then by price
   const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 }
   Object.keys(groupedAccessories).forEach((type) => {
     groupedAccessories[type as AccessoryType].sort((a, b) => {
@@ -360,9 +491,10 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
           </DialogHeader>
 
           <Tabs defaultValue="accessories" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="accessories">Accessoires</TabsTrigger>
               <TabsTrigger value="backgrounds">Arrière-plans</TabsTrigger>
+              <TabsTrigger value="xp">Boost XP</TabsTrigger>
             </TabsList>
 
             <TabsContent value="accessories" className="space-y-4 sm:space-y-6">
@@ -390,8 +522,20 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                             key={accessory.id}
                             className={`p-3 sm:p-4 hover:shadow-lg transition-all border-2 ${getRarityBorderColor(accessory.rarity)} ${getRarityBackground(accessory.rarity)} ${
                               isEquipped ? "ring-2 ring-green-500 ring-offset-2" : ""
-                            } ${accessory.rarity === "legendary" ? "animate-pulse" : ""}`}
+                            } ${accessory.rarity === "legendary" ? "animate-pulse" : ""} relative`}
                           >
+                            {isEquipped && (
+                              <span className="absolute top-2 right-2 flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold shadow-md z-10">
+                                <Check className="h-3 w-3" />
+                                Équipé
+                              </span>
+                            )}
+                            {isOwned && !isEquipped && (
+                              <span className="absolute top-2 right-2 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold shadow-md z-10">
+                                Possédé
+                              </span>
+                            )}
+
                             <div className="space-y-2">
                               <div className="mb-2">
                                 <AccessoryPreview accessoryId={accessory.id} rarity={accessory.rarity} />
@@ -413,20 +557,6 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                               </div>
 
                               <p className="text-xs sm:text-sm text-muted-foreground">{accessory.description}</p>
-
-                              <div className="flex gap-2">
-                                {isEquipped && (
-                                  <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">
-                                    <Check className="h-3 w-3" />
-                                    Équipé
-                                  </span>
-                                )}
-                                {isOwned && !isEquipped && (
-                                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
-                                    Possédé
-                                  </span>
-                                )}
-                              </div>
 
                               <Button
                                 onClick={() => handleAction(accessory)}
@@ -457,6 +587,63 @@ export function ShopModal({ open, onOpenChange, monsterId, onAccessoryEquipped }
                   onAccessoryEquipped()
                 }}
               />
+            </TabsContent>
+
+            <TabsContent value="xp" className="space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6 bg-gradient-to-r from-yellow-100 to-amber-100 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-yellow-400 shadow-md w-fit mx-auto">
+                <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
+                <span className="font-bold text-lg sm:text-xl text-yellow-800">{coins}</span>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 mb-4 bg-gradient-to-r from-purple-100 to-blue-100 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-purple-400 shadow-md w-fit mx-auto">
+                <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                <span className="font-bold text-base sm:text-lg text-purple-800">
+                  Niveau {monsterXP.level} • {monsterXP.xp} XP
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {XP_PACKAGES.map((xpPackage) => {
+                  const canAfford = coins >= xpPackage.price
+
+                  return (
+                    <Card
+                      key={xpPackage.id}
+                      className="p-3 sm:p-4 hover:shadow-lg transition-all border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-blue-50 hover:scale-105"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-center">
+                          <div className="text-5xl sm:text-6xl">{xpPackage.icon}</div>
+                        </div>
+
+                        <div className="text-center">
+                          <h4 className="font-bold text-base sm:text-lg mb-1">{xpPackage.name}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">{xpPackage.description}</p>
+
+                          <div className="flex items-center justify-center gap-1 bg-purple-100 px-3 py-1 rounded-full mb-2 w-fit mx-auto">
+                            <Zap className="h-4 w-4 text-purple-600" />
+                            <span className="font-bold text-sm text-purple-800">+{xpPackage.xp} XP</span>
+                          </div>
+
+                          <div className="flex items-center justify-center gap-1 bg-yellow-100 px-3 py-1 rounded-full w-fit mx-auto">
+                            <Coins className="h-4 w-4 text-yellow-600" />
+                            <span className="font-bold text-sm text-yellow-800">{xpPackage.price}</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handlePurchaseXP(xpPackage)}
+                          disabled={purchasing || !canAfford}
+                          className="w-full text-sm sm:text-base bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                          size="sm"
+                        >
+                          {purchasing ? "..." : canAfford ? "Acheter" : "Pas assez"}
+                        </Button>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
             </TabsContent>
           </Tabs>
         </DialogContent>
